@@ -1,0 +1,128 @@
+USE PortalProveedores
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+
+/* ==================================================================================*/
+-- spSAT_Cat_Entity_Type_CRUD_Records
+/* ==================================================================================*/	
+PRINT 'Crea Procedure: spSAT_Cat_Entity_Type_CRUD_Records'
+
+IF OBJECT_ID('[dbo].[spSAT_Cat_Entity_Type_CRUD_Records]','P') IS NOT NULL
+       DROP PROCEDURE [dbo].spSAT_Cat_Entity_Type_CRUD_Records
+GO
+
+/*
+Autor:		Alejandro Zepeda
+Desc:		SAT_Cat_Entity_Type | Only Read 
+Date:		14/10/2021
+Example:
+			spSAT_Cat_Entity_Type_CRUD_Records @pvOptionCRUD = 'R'
+			spSAT_Cat_Entity_Type_CRUD_Records @pvOptionCRUD = 'R', @pvIdCatalog = 'M'
+
+			
+			select * from SAT_Cat_Entity_Type
+			DELETE SAT_Cat_Entity_Type WHERE Id_Assumption = '001'
+*/
+
+CREATE PROCEDURE [dbo].spSAT_Cat_Entity_Type_CRUD_Records
+@pvOptionCRUD		Varchar(1),
+@pvIdCatalog		Varchar(10)	= '',
+@pvShortDesc		Varchar(50) = '',
+@pvLongDesc			Varchar(255)= '',
+@pbStatus			Bit			= 1,
+@pvUser				Varchar(50) = '',
+@pvIP				Varchar(20) = ''
+WITH ENCRYPTION AS
+
+SET NOCOUNT ON
+BEGIN TRY
+	--------------------------------------------------------------------
+	--Variables for log control
+	--------------------------------------------------------------------
+	DECLARE	@nIdTransacLog		Numeric
+	Declare @vDescOperationCRUD Varchar(50)		= dbo.fnGetOperationCRUD(@pvOptionCRUD)
+	DECLARE @vDescription		Varchar(255)	= 'SAT_Cat_Entity_Type - ' + @vDescOperationCRUD 
+	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
+	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSAT_Cat_Entity_Type_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdCatalog = '" + ISNULL(CAST(@pvIdCatalog AS VARCHAR),'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	--------------------------------------------------------------------
+	--Create Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'C'
+	BEGIN
+		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+	END
+	--------------------------------------------------------------------
+	--Reads Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'R'
+	BEGIN
+		SELECT 
+		Id_Catalog = Id_Entity_Type,
+		Short_Desc,
+		Long_Desc,
+		[Status],
+		Modify_Date,
+		Modify_By,
+		Modify_IP
+		FROM SAT_Cat_Entity_Type 
+		WHERE 
+			(@pvIdCatalog	= '' OR Id_Entity_Type = @pvIdCatalog) AND
+			(@pvShortDesc	= '' OR Short_Desc LIKE '%' +  @pvShortDesc + '%')	
+		ORDER BY  Id_Catalog
+		
+	END
+
+	--------------------------------------------------------------------
+	--Update Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'U'
+	BEGIN
+		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+	END
+
+	--------------------------------------------------------------------
+	--Delete Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'D' OR @vDescOperationCRUD = 'N/A'
+	BEGIN
+		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+	END
+
+	--------------------------------------------------------------------
+	--Register Transaction Log
+	--------------------------------------------------------------------
+	EXEC spSecurity_Transaction_Log_Ins_Record	@pvDescription		= @vDescription, 
+												@pvExecCommand		= @vExecCommand,
+												@piCode				= @iCode, 
+												@pvExceptionMessage = @vExceptionMessage,
+												@pvUser				= @pvUser, 
+												@pnIdTransacLog		= @nIdTransacLog OUTPUT
+	
+	SET NOCOUNT OFF
+	
+	IF @pvOptionCRUD <> 'R'
+	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog FROM vwSecurityCodes WHERE Code = @iCode
+
+END TRY
+BEGIN CATCH
+	--------------------------------------------------------------------
+	-- Exception Handling
+	--------------------------------------------------------------------
+	SET @iCode					= dbo.fnGetCodes('Generic Error')
+	SET @vExceptionMessage		= dbo.fnGetTransacErrorBD()
+
+	EXEC spSecurity_Transaction_Log_Ins_Record	@pvDescription		= @vDescription, 
+												@pvExecCommand		= @vExecCommand,
+												@piCode				= @iCode, 
+												@pvExceptionMessage = @vExceptionMessage,
+												@pvUser				= @pvUser, 
+												@pnIdTransacLog		= @nIdTransacLog OUTPUT
+	
+	SET NOCOUNT OFF
+	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog FROM vwSecurityCodes WHERE Code = @iCode
+		
+END CATCH
