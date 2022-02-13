@@ -23,7 +23,7 @@ Example:
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'R'
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'R', @piIdCompany = 1
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'R', @pvUUID = 'D48F641F-E656-4B35-AAF6-DBAEA5D61F54'
-			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'U'
+			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'U', @piIdCompany = 1, @piRequestNumber = 6, @pvUUID = 'D48F641F-E656-4B35-AAF6-DBAEA5D61F54'
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'D'
 
 */
@@ -116,7 +116,14 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'U'
 	BEGIN
-		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+		IF EXISTS (SELECT * FROM Carta_Porte_Requests WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1)
+		BEGIN
+			UPDATE Carta_Porte_Requests
+			SET UUID = @pvUUID
+			WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1
+		END
+		ELSE
+			SET @iCode	= dbo.fnGetCodes('Request Number - Not Exists')			
 	END
 
 	--------------------------------------------------------------------
