@@ -58,12 +58,12 @@ BEGIN TRY
 	IF @pvOptionCRUD = 'C'
 	BEGIN
 		
-		IF EXISTS (SELECT * FROM Carta_Porte_Requests WHERE Id_Company = @piIdCompany AND UUID = @pvUUID)
+		IF EXISTS (SELECT * FROM Carta_Porte_Requests WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1)
 		BEGIN
 			UPDATE Carta_Porte_Requests
 			SET [Status] = 0,
 				Modify_Date = GETDATE()
-			WHERE Id_Company = @piIdCompany AND UUID = @pvUUID
+			WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1
 		END
 		
 		INSERT INTO Carta_Porte_Requests 
