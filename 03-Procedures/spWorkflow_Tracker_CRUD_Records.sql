@@ -61,7 +61,7 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- DonÂ´t Exists
 		BEGIN
 
 			SET @piIdWorkflowTracker = (SELECT ISNULL(MAX(Id_Workflow_Tracker),0) + 1 FROM Workflow_Tracker)
@@ -110,10 +110,12 @@ BEGIN TRY
 		W.Id_Workflow_Type = WT.Id_Workflow_Type
 
 		INNER JOIN Cat_Workflow_Status ST ON 
-		W.Id_Workflow_Status = ST.Id_Workflow_Status
+		W.Id_Workflow_Status = ST.Id_Workflow_Status AND 
+		W.Id_Workflow_Type = ST.Id_Workflow_Type
 
 		INNER JOIN Cat_Workflow_Status STC ON 
-		W.Id_Workflow_Status_Change = STC.Id_Workflow_Status
+		W.Id_Workflow_Status_Change = STC.Id_Workflow_Status AND 
+		W.Id_Workflow_Type = STC.Id_Workflow_Type
 
 
 		WHERE 
