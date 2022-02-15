@@ -95,7 +95,7 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Donï¿½t Exists
 		BEGIN
 		SET @piIdVendor = (SELECT MAX(Id_Vendor) + 1 FROM Cat_Vendors)
 
@@ -154,7 +154,8 @@ BEGIN TRY
 		Vendor.Id_Country = Country.Id_Country
 		WHERE 
 		(@piIdVendor	= -1 OR Id_Vendor = @piIdVendor) AND 
-		(@pvName		= '' OR Name LIKE '%' + @pvName + '%')
+		(@pvName		= '' OR Name LIKE '%' + @pvName + '%') AND
+		(@pvTaxId		= '' OR Tax_Id = @pvTaxId) 
 		
 		ORDER BY  Id_Vendor
 	END
