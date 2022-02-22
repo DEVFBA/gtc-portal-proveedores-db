@@ -22,9 +22,9 @@ Example:
 
         DECLARE  @udtInvoicesPools	    UDT_Invoices_Pools
 
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','9124af96-d208-4e23-8543-d92e6440fc0b',152)
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','051e098d-d468-4480-852b-fb2f29f1330d',153)
-		SELECT * FROM @udtInvoicesPools
+        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71905183-5c13-4fcb-8838-e25e80cd3472',175)
+        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71d1a517-9c6b-48b0-ad61-a2d7a7a5527f',176)
+		--SELECT * FROM @udtInvoicesPools
 
 
         EXEC spInvoices_Pools_CRUD_Records	@pvOptionCRUD = 'C', 
@@ -34,19 +34,21 @@ Example:
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R'  
 
-        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePoole = 1
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 6
 
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U'
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'D'
 
-        SELECT * FROM Invoices_Pools
+        SELECT * FROM Invoices_Pools_Header
+		SELECT * FROM Invoices_Pools_Detail
+		SELECT * FROM workflow
 
 
 */
 CREATE PROCEDURE [dbo].spInvoices_Pools_CRUD_Records
 @pvOptionCRUD			Varchar(1),
-@piIdInvoicePoole       Numeric = 0,
+@piIdInvoicePool        Numeric = 0,
 @pudtInvoicesPools	    UDT_Invoices_Pools Readonly,
 @pvUser					Varchar(50) = '',
 @pvIP				    Varchar(20) = ''
@@ -66,7 +68,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Invoices_Pools - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @piIdInvoicePoole = '" + ISNULL(CAST(@piIdInvoicePoole AS VARCHAR),'NULL') + "', @pudtInvoicesPools = '" + ISNULL(CAST(@iNumRegistros AS VARCHAR),'NULL') + " rows affected', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @piIdInvoicePool = '" + ISNULL(CAST(@piIdInvoicePool AS VARCHAR),'NULL') + "', @pudtInvoicesPools = '" + ISNULL(CAST(@iNumRegistros AS VARCHAR),'NULL') + " rows affected', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	
     --------------------------------------------------------------------
 	--Create Records
@@ -91,7 +93,7 @@ BEGIN TRY
             FROM @pudtInvoicesPools
             
             --Obtine el Id_Invoice_Pool
-            SET @piIdInvoicePoole = @@IDENTITY
+            SET @piIdInvoicePool = @@IDENTITY
 
             -----------------------		
 			--Insert Detail
@@ -102,7 +104,7 @@ BEGIN TRY
                 Id_Workflow)
 
             SELECT 
-                @piIdInvoicePoole,
+                @piIdInvoicePool,
                 UUID,
                 Id_Workflow
             FROM @pudtInvoicesPools   
@@ -126,7 +128,7 @@ BEGIN TRY
 		PH.Id_Invoice_Pool = PD.Id_Invoice_Pool
 
 		WHERE 
-		(@piIdInvoicePoole	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePoole) 
+		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
 		ORDER BY  PH.Id_Invoice_Pool, PD.UUID	
 	END
 
@@ -167,7 +169,7 @@ BEGIN TRY
 	SET NOCOUNT OFF
 	
 	IF @pvOptionCRUD <> 'R'
-	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog FROM vwSecurityCodes WHERE Code = @iCode
+	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog, Id_Invoice_Pool = @piIdInvoicePool FROM vwSecurityCodes WHERE Code = @iCode
 
 END TRY
 BEGIN CATCH
@@ -185,6 +187,6 @@ BEGIN CATCH
 												@pnIdTransacLog		= @nIdTransacLog OUTPUT
 	
 	SET NOCOUNT OFF
-	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog FROM vwSecurityCodes WHERE Code = @iCode
+	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog, Id_Invoice_Pool = @piIdInvoicePool FROM vwSecurityCodes WHERE Code = @iCode
 		
 END CATCH
