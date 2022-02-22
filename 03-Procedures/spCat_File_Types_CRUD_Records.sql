@@ -19,11 +19,11 @@ Autor:		Alejandro Zepeda
 Desc:		Cat_File_Types | Create - Read - Upadate - Delete 
 Date:		05/09/2021
 Example:
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'C', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvExtension = 'PDF', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'C', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvFileNamePrefix ='Prefix' , @pvPath ='c:\' , @pvExtension = 'PDF', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R'
 			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R', @pvIdFileType = 'PDFINV'
 			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R', @pvShortDesc = 'PDF' 
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'U', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvExtension = 'pdf', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'U', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvFileNamePrefix ='Prefix' , @pvPath ='c:\',  @pvExtension = 'pdf', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'D'
 
 */
@@ -32,7 +32,9 @@ CREATE PROCEDURE [dbo].spCat_File_Types_CRUD_Records
 @pvIdFileType		Varchar(10)	= '',
 @pvShortDesc		Varchar(50) = '',
 @pvLongDesc			Varchar(255)= '',
-@pvExtension		Varchar(3) = '',
+@pvFileNamePrefix	Varchar(50)	= '',
+@pvPath				Varchar(255)= '',
+@pvExtension		Varchar(3) 	= '',
 @pbStatus			Bit			= 1,
 @pvUser				Varchar(50) = '',
 @pvIP				Varchar(20) = ''
@@ -48,7 +50,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Cat_File_Types - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spCat_File_Types_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdFileType = '" + ISNULL(CAST(@pvIdFileType AS VARCHAR),'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "',  @pvExtension = '" + ISNULL(@pvExtension,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spCat_File_Types_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdFileType = '" + ISNULL(CAST(@pvIdFileType AS VARCHAR),'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "', @pvFileNamePrefix = '" + ISNULL(@pvFileNamePrefix,'NULL') + "', @pvPath = '" + ISNULL(@pvPath,'NULL') + "', @pvExtension = '" + ISNULL(@pvExtension,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -59,12 +61,14 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Donï¿½t Exists
 		BEGIN
 			INSERT INTO Cat_File_Types 
 			   (Id_File_Type,
 				Short_Desc,
 				Long_Desc,
+				File_Name_Prefix,
+				[Path],
 				Extension,
 				[Status],
 				Modify_By,
@@ -74,6 +78,8 @@ BEGIN TRY
 			   (@pvIdFileType,
 				@pvShortDesc,
 				@pvLongDesc,
+				@pvFileNamePrefix,
+				@pvPath,
 				@pvExtension,
 				@pbStatus,
 				@pvUser,
@@ -92,6 +98,8 @@ BEGIN TRY
 		Short_Desc,
 		Long_Desc,
 		Extension,
+		File_Name_Prefix,
+		[Path],
 		[Status],
 		Modify_Date,
 		Modify_By,
@@ -115,6 +123,8 @@ BEGIN TRY
 		UPDATE Cat_File_Types
 		SET Short_Desc			= @pvShortDesc,
 			Long_Desc			= @pvLongDesc,
+			File_Name_Prefix	= @pvFileNamePrefix,
+			[Path]				= @pvPath,
 			Extension			= @pvExtension,
 			[Status]			= @pbStatus,
 			Modify_By			= @pvUser,

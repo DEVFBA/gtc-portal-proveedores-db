@@ -22,6 +22,7 @@ Example:
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'C', @piIdParameter = 1 , @pvLongDesc = 'Allow Cost / Margin View', @pvValue = '0', @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'R'
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'R', @pvType ='User'
+			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'R', @pvIdGrouper ='SECURITY'
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'R', @piIdParameter = 1
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'U', @piIdParameter = 1 , @pvLongDesc = 'Allow Cost / Margin View', @pvValue = '0', @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_General_Parameters_CRUD_Records @pvOptionCRUD = 'D', @piIdParameter = 1
@@ -80,7 +81,7 @@ BEGIN TRY
 			  (@pvIdGrouper = '' OR P.Id_Grouper = @pvIdGrouper) AND  
 			  (@pvType = '' OR [Type] = @pvType)
 
-		ORDER BY Id_Catalog,P.Id_Grouper
+		ORDER BY P.Id_Grouper
 
 	END
 

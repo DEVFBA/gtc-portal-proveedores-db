@@ -26,3 +26,19 @@ CREATE TYPE [dbo].[UDT_Security_Access]AS TABLE
    Modify_IP            varchar(20)          not null
 )
 go
+
+
+/* ==================================================================================*/
+-- 2. UDT_Invoices_Pools
+/* ==================================================================================*/
+PRINT 'Crea 2.  UDT_Invoices_Pools' 
+IF type_id('[dbo].[UDT_Invoices_Pools]') IS NOT NULL
+        DROP TYPE  [dbo].[UDT_Invoices_Pools]
+GO
+CREATE TYPE [dbo].[UDT_Invoices_Pools]AS TABLE
+(
+   Comments             varchar(MAX)    not null,
+   UUID                 varchar(50)     null,
+   Id_Workflow          numeric         null
+)
+go
