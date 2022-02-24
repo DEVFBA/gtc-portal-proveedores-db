@@ -55,7 +55,7 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Donï¿½t Exists
 		BEGIN
 			INSERT INTO Workflow_Files 
 			   (Id_Workflow,
@@ -74,7 +74,10 @@ BEGIN TRY
 		SELECT 
 		WF.Id_Workflow,
 		WF.Id_File_Type,
-		File_Type = C.Short_Desc
+		File_Type = C.Short_Desc,
+		C.[Path],
+		C.Extension,
+		C.File_Name_Prefix
 		FROM Workflow_Files WF 
 		INNER JOIN Cat_File_Types C ON 
 		WF.Id_File_Type = C.Id_File_Type AND 
