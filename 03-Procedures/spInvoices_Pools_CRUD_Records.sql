@@ -118,6 +118,12 @@ BEGIN TRY
 		SELECT  PH.Id_Invoice_Pool,
                 PH.Comments,
                 PD.UUID,
+				I.Id_Company,
+				Company = C.Name,
+				I.Id_Vendor,
+				Vendor = V.Name,
+				I.Serie,
+				I.Folio,				
                 PD.Id_Workflow,
 				PH.Modify_By,
 				PH.Modify_Date,
@@ -126,6 +132,17 @@ BEGIN TRY
 
 		INNER JOIN Invoices_Pools_Detail PD ON 
 		PH.Id_Invoice_Pool = PD.Id_Invoice_Pool
+
+		INNER JOIN Invoices I ON
+		PD.UUID = I.UUID
+
+		INNER JOIN Companies C ON 
+		I.Id_Company = C.Id_Company AND
+		C.[Status] = 1
+		
+		INNER JOIN Cat_Vendors V ON
+		I.Id_Vendor = V.Id_Vendor AND
+		C.[Status] = 1
 
 		WHERE 
 		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
