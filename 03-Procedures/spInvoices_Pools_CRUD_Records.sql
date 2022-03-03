@@ -22,15 +22,23 @@ Example:
 
         DECLARE  @udtInvoicesPools	    UDT_Invoices_Pools
 
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71905183-5c13-4fcb-8838-e25e80cd3472',175)
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71d1a517-9c6b-48b0-ad61-a2d7a7a5527f',176)
+        INSERT INTO @udtInvoicesPools VALUES ('COMMENTS','2e58a46a-88bd-4bce-aceb-5f8b727e7cd1',284)
+        INSERT INTO @udtInvoicesPools VALUES ('COMMENTS','15f95f6a-3451-4530-a3e1-8eb95381d180',285)
 		--SELECT * FROM @udtInvoicesPools
 
 
-        EXEC spInvoices_Pools_CRUD_Records	@pvOptionCRUD = 'C', 
-                                            @pudtInvoicesPools = @udtInvoicesPools,
-                                            @pvUser = 'AZEPEDA', 
-                                            @pvIP ='192.168.1.254'
+
+        EXEC spInvoices_Pools_CRUD_Records	@pvOptionCRUD 				= 'C', 
+                                            @pudtInvoicesPools 			= @udtInvoicesPools,
+                                            @piIdCompany				= 1,
+											@piIdVendor					= 1,
+											@fTotalInvoices				= 1000,
+											@fTotalAmount				= 2000,
+											@pvIdWorkflowType			= 'WF-POOL',
+											@piIdWorkflowStatus			= 100,
+											@piIdWorkflowStatusChange	= 100,
+											@pvUser 					= 'AZEPEDA', 
+                                            @pvIP 						='192.168.1.254'
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R'  
 
@@ -47,11 +55,19 @@ Example:
 
 */
 CREATE PROCEDURE [dbo].spInvoices_Pools_CRUD_Records
-@pvOptionCRUD			Varchar(1),
-@piIdInvoicePool        Numeric = 0,
-@pudtInvoicesPools	    UDT_Invoices_Pools Readonly,
-@pvUser					Varchar(50) = '',
-@pvIP				    Varchar(20) = ''
+@pvOptionCRUD				Varchar(1),
+@piIdInvoicePool        	Numeric = 0,
+@pudtInvoicesPools	    	UDT_Invoices_Pools Readonly,
+@piIdCompany				Int			= 0,
+@piIdVendor					Int			= -1,
+@fTotalInvoices				float		= 0,
+@fTotalAmount				float		= 0,		
+@pnIdWorkflow				Numeric		= 0,
+@pvIdWorkflowType			Varchar(10) = '',
+@piIdWorkflowStatus			Int			= 0, 
+@piIdWorkflowStatusChange	Int			= 0,		
+@pvUser						Varchar(50) = '',
+@pvIP				    	Varchar(20) = ''
 WITH ENCRYPTION AS
 
 SET NOCOUNT ON
@@ -59,7 +75,10 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	--Work Variables
 	--------------------------------------------------------------------
-    DECLARE @iNumRegistros		Int			= (SELECT COUNT(*) FROM @pudtInvoicesPools)
+    DECLARE @iNumRegistros	Int			= (SELECT COUNT(*) FROM @pudtInvoicesPools)
+	DECLARE @TblResponse 	Table (Code smallint, Code_Classification Varchar(50), Code_Type Varchar(50), Code_Message_User Varchar(MAX) , Code_Successful Bit,  IdTransacLog Numeric , IdWorkflow Numeric) 
+	DECLARE @vComments 		Varchar(MAX) = (SELECT TOP 1 Comments FROM @pudtInvoicesPools )
+
 	--------------------------------------------------------------------
 	--Variables for log control
 	--------------------------------------------------------------------
@@ -75,22 +94,34 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'C'
 	BEGIN	
+
+			
             -----------------------		
 			--Insert Header
             -----------------------
 			INSERT INTO Invoices_Pools_Header (
-                Comments,
-                Modify_By,
-                Modify_Date,
-                Modify_IP)
+				Id_Company,
+				Id_Vendor,
+				Pool_Date,
+				Total_Invoices,
+				Total_Amount,
+				Comments,
+				Modify_By,
+				Modify_Date,
+				Modify_IP)
 
 			
-            SELECT DISTINCT 
-                Comments,
+            VALUES(
+				@piIdCompany,
+				@piIdVendor,
+				GETDATE(),
+				@fTotalInvoices,
+				@fTotalAmount,
+                @vComments,
                 @pvUser,
                 GETDATE(),
-                @pvIP
-            FROM @pudtInvoicesPools
+                @pvIP)
+      
             
             --Obtine el Id_Invoice_Pool
             SET @piIdInvoicePool = @@IDENTITY
@@ -108,6 +139,19 @@ BEGIN TRY
                 UUID,
                 Id_Workflow
             FROM @pudtInvoicesPools   
+
+
+			-- INSERTA WF
+			INSERT INTO @TblResponse
+			EXEC spWorkflow_CRUD_Records 
+									@pvOptionCRUD 				= 'C', 
+									@pvIdWorkflowType 			= @pvIdWorkflowType, 
+									@piIdWorkflowStatus	 		= @piIdWorkflowStatus, 
+									@piIdWorkflowStatusChange 	= @piIdWorkflowStatusChange,
+									@pvRecordIdentifier 		= @piIdInvoicePool, 
+									@pvComments 				= @vComments,  
+									@pvUser 					= @pvUser, 
+									@pvIP 						= @pvIP
 	END
 
 	--------------------------------------------------------------------
@@ -115,8 +159,17 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'R'
 	BEGIN
-		SELECT  PH.Id_Invoice_Pool,
-                PH.Comments,
+		SELECT  --Headers
+				PH.Id_Invoice_Pool,
+				Header_Id_Company 		= PH.Id_Company,
+				Header_Company 			= CH.Name,
+				Header_Id_Vendor 		= PH.Id_Vendor,
+				Header_Vendor 			= VH.Name,
+				Header_Pool_Date 		= PH.Pool_Date,
+				Header_Total_Invoices 	= PH.Total_Invoices,
+				Header_Total_Amount 	= PH.Total_Amount,			
+                Header_Comments 		= PH.Comments,
+				--Details
                 PD.UUID,
 				I.Id_Company,
 				Company = C.Name,
@@ -142,7 +195,15 @@ BEGIN TRY
 		
 		INNER JOIN Cat_Vendors V ON
 		I.Id_Vendor = V.Id_Vendor AND
-		C.[Status] = 1
+		V.[Status] = 1
+
+		INNER JOIN Companies CH ON 
+		PH.Id_Company = CH.Id_Company AND
+		CH.[Status] = 1
+		
+		INNER JOIN Cat_Vendors VH ON
+		PH.Id_Vendor = VH.Id_Vendor AND
+		VH.[Status] = 1
 
 		WHERE 
 		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
