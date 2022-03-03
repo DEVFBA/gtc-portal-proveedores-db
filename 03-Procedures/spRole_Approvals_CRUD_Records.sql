@@ -148,7 +148,7 @@ BEGIN TRY
 		(@pvIdApprovalType	= ''	OR RA.Id_Approval_Type = @pvIdApprovalType) 
 		  
 		
-		ORDER BY [User]
+		ORDER BY Order_Sign, [User]
 		RETURN
 	END
 
