@@ -19,12 +19,12 @@ Autor:		Alejandro Zepeda
 Desc:		Security_Roles | Create - Read - Upadate - Delete 
 Date:		28/08/2021
 Example:
-			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'C', @pvIdRole = 'ADMIN' , @pvShortDesc = 'System Administrator', @pvLongDesc = 'System Administrator', @pbShowCustomers = 0, @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'R', @pvIdRole = 'ADMIN' 
+			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'C', @pvIdRole = 'SYSTEM' , @pvShortDesc = 'System Administrator', @pvLongDesc = 'System Administrator', @pbShowCustomers = 0, @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'R', @pvIdRole = 'SYSTEM' 
 			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'R'
-			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'U', @pvIdRole = 'ADMIN' , @pvShortDesc = 'System Administrator', @pvLongDesc = 'System Administrator', @pbShowCustomers = 1, @pbStatus = 0, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'D', @pvIdRole = 'ADMIN' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'X', @pvIdRole = 'ADMIN' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'U', @pvIdRole = 'SYSTEM' , @pvShortDesc = 'TI System Administrator', @pvLongDesc = 'TI System Administrator', @pbShowCustomers = 1, @pbStatus = 0, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'D', @pvIdRole = 'SYSTEM' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spSecurity_Roles_CRUD_Records @pvOptionCRUD = 'X', @pvIdRole = 'SYSTEM' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 
 */
 CREATE PROCEDURE [dbo].spSecurity_Roles_CRUD_Records
@@ -55,7 +55,32 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'C'
 	BEGIN
-		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+			-- Validate if the record already exists
+		IF EXISTS(SELECT * FROM Cat_Applications WHERE Short_Desc = @pvShortDesc)
+		BEGIN
+			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
+		END
+		ELSE -- Don't Exists
+		BEGIN
+			INSERT INTO Security_Roles (
+				Id_Role,
+				Short_Desc,
+				Long_Desc,
+				Show_Customers,
+				Status,
+				Modify_By,
+				Modify_Date,
+				Modify_IP)
+			VALUES (
+				@pvIdRole,
+				@pvShortDesc,
+				@pvLongDesc,
+				@pbShowCustomers,
+				@pbStatus,
+				@pvUser,
+				GETDATE(),
+				@pvIP)
+		END
 	END
 	--------------------------------------------------------------------
 	--Reads Records
@@ -82,7 +107,17 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'U'
 	BEGIN
-		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+		UPDATE Security_Roles
+		SET  
+			Short_Desc 		= @pvShortDesc,
+			Long_Desc		= @pvLongDesc,
+			Show_Customers	= @pbShowCustomers,
+			[Status]		= @pbStatus,
+			Modify_Date		= GETDATE(),
+			Modify_By		= @pvUser,
+			Modify_IP		= @pvIP  
+		WHERE Id_Role = @pvIdRole
+
 	END
 
 	--------------------------------------------------------------------

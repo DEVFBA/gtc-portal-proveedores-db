@@ -42,6 +42,7 @@ Example:
 			EXEC spCompanies_CRUD_Records @pvOptionCRUD = 'R'
 			EXEC spCompanies_CRUD_Records @pvOptionCRUD = 'R', @piIdCompany = 3			
 			EXEC spCompanies_CRUD_Records @pvOptionCRUD = 'R', @pvName = 'Company'
+			EXEC spCompanies_CRUD_Records @pvOptionCRUD = 'R', @pvTaxId = 'IPM6203226B4'
 			
 			EXEC spCompanies_CRUD_Records	@pvOptionCRUD = 'U', 
 											@piIdCompany = 3, 	
@@ -109,7 +110,7 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Donï¿½t Exists
 		BEGIN
 		SET @piIdCompany = (SELECT MAX(Id_Company) + 1 FROM Companies)
 
@@ -183,8 +184,9 @@ BEGIN TRY
 		Companies.Id_Country = Country.Id_Country
 		WHERE 
 		(@piIdCompany	= 0	 OR Id_Company = @piIdCompany) AND 
-		(@pvName		= '' OR Name LIKE '%' + @pvName + '%')
-		
+		(@pvName		= '' OR Name LIKE '%' + @pvName + '%') AND 
+		(@pvTaxId		= '' OR Tax_Id = @pvTaxId)  
+
 		ORDER BY  Id_Company
 	END
 

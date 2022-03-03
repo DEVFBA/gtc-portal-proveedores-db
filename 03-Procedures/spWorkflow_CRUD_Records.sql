@@ -128,10 +128,11 @@ BEGIN TRY
 
 
 		WHERE 
-			(@piIdWorkflow		= 0 OR  W.Id_Workflow = @piIdWorkflow)	AND
-			(@pvIdWorkflowType	= '' OR W.Id_Workflow_Type = @pvIdWorkflowType) AND
-			(@piIdWorkflowStatus= 0  OR W.Id_Workflow_Status = @piIdWorkflowStatus)	AND 
-			(@pvRecordIdentifier= ''  OR W.Record_Identifier = @pvRecordIdentifier)
+			(@piIdWorkflow				= 0  OR  W.Id_Workflow = @piIdWorkflow)	AND
+			(@pvIdWorkflowType			= '' OR W.Id_Workflow_Type = @pvIdWorkflowType) AND
+			(@piIdWorkflowStatus		= 0  OR W.Id_Workflow_Status = @piIdWorkflowStatus)	AND 
+			(@piIdWorkflowStatusChange 	= 0  OR W.Id_Workflow_Status_Change = @piIdWorkflowStatusChange) AND 
+			(@pvRecordIdentifier		= '' OR W.Record_Identifier = @pvRecordIdentifier)
 			
 			
 		ORDER BY  W.Id_Workflow

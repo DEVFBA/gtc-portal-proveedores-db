@@ -58,7 +58,7 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Donï¿½t Exists
 		BEGIN
 			INSERT INTO Workflow_Tracker_File_Types 
 			   (Id_Workflow_Tracker,
@@ -86,6 +86,7 @@ BEGIN TRY
 		WF.Id_Workflow_Tracker,
 		WF.Id_File_Type,
 		File_Type = C.Short_Desc,
+		C.Extension,
 		WF.Mandatory,
 		WF.Modify_Date,
 		WF.Modify_By,

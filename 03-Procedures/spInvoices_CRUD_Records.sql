@@ -261,7 +261,7 @@ BEGIN TRY
 		(@piIdVendor			= -1 OR CP.Id_Vendor = @piIdVendor) AND
 		(@pvVendorTaxId			= '' OR V.Tax_Id LIKE '%' +  @pvVendorTaxId + '%') AND				
 		(@pvInvoiceDate			= '' OR CONVERT(VARCHAR(10),CP.Invoice_Date,112) BETWEEN @pvInvoiceDate AND @pvInvoiceDateFinal) AND 
-		(@piIdWorkflowStatus	= '' OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) 			
+		(@piIdWorkflowStatus	= 0 OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) 			
 		
 
 		ORDER BY CP.UUID, CP.Id_Workflow, CP.Id_Company, CP.Id_Vendor 		

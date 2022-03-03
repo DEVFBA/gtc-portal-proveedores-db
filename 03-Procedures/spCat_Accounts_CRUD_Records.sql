@@ -6,39 +6,39 @@ SET QUOTED_IDENTIFIER OFF
 GO
 
 /* ==================================================================================*/
--- spCat_File_Types_CRUD_Records
+-- spCat_Accounts_CRUD_Records
 /* ==================================================================================*/	
-PRINT 'Crea Procedure: spCat_File_Types_CRUD_Records'
+PRINT 'Crea Procedure: spCat_Accounts_CRUD_Records'
 
-IF OBJECT_ID('[dbo].[spCat_File_Types_CRUD_Records]','P') IS NOT NULL 
-       DROP PROCEDURE [dbo].spCat_File_Types_CRUD_Records
+IF OBJECT_ID('[dbo].[spCat_Accounts_CRUD_Records]','P') IS NOT NULL
+       DROP PROCEDURE [dbo].spCat_Accounts_CRUD_Records
 GO
 
 /*
 Autor:		Alejandro Zepeda
-Desc:		Cat_File_Types | Create - Read - Upadate - Delete 
-Date:		05/09/2021
+Desc:		Cat_Accounts | Create - Read - Upadate - Delete 
+Date:		16/02/2022
 Example:
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'C', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvFileNamePrefix ='Prefix' , @pvPath ='c:\' , @pvExtension = 'PDF', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R'
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R', @pvIdFileType = 'PDFINV'
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'R', @pvShortDesc = 'PDF' 
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'U', @pvIdFileType = 'PDFINV',  @pvShortDesc = 'Factura PDF', @pvLongDesc = 'Factura PDF', @pvFileNamePrefix ='Prefix' , @pvPath ='c:\',  @pvExtension = 'pdf', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spCat_File_Types_CRUD_Records @pvOptionCRUD = 'D'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'C', @pvIdAccountType = 'RETFLECOM' ,@pvBusinessUnit = '', @pvObjectAccount = '', @pvSubsidiary = '', @pvAccount_Name = '', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R', @piIdAccount = 1
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'U',  @piIdAccount = 1, @pvIdAccountType = 'RETFLECOM' , @pvBusinessUnit = 'x', @pvObjectAccount = 'y', @pvSubsidiary = '', @pvAccount_Name = '', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'D' --No Aplica
 
 */
-CREATE PROCEDURE [dbo].spCat_File_Types_CRUD_Records
+CREATE PROCEDURE [dbo].spCat_Accounts_CRUD_Records
 @pvOptionCRUD		Varchar(1),
-@pvIdFileType		Varchar(10)	= '',
-@pvShortDesc		Varchar(50) = '',
-@pvLongDesc			Varchar(255)= '',
-@pvFileNamePrefix	Varchar(50)	= '',
-@pvPath				Varchar(255)= '',
-@pvExtension		Varchar(3) 	= '',
+@piIdAccount	    Int = 0,
+@pvIdAccountType	Varchar(10) = '',
+@pvBusinessUnit		Varchar(15) = '',
+@pvObjectAccount	Varchar(15) = '',
+@pvSubsidiary       Varchar(15) = '',
+@pvAccount_Name     Varchar(50) = '',
 @pbStatus			Bit			= 1,
 @pvUser				Varchar(50) = '',
 @pvIP				Varchar(20) = ''
-WITH ENCRYPTION AS
+WITH ENCRYPTION
+AS
 
 SET NOCOUNT ON
 BEGIN TRY
@@ -47,71 +47,68 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	DECLARE	@nIdTransacLog		Numeric
 	Declare @vDescOperationCRUD Varchar(50)		= dbo.fnGetOperationCRUD(@pvOptionCRUD)
-	DECLARE @vDescription		Varchar(255)	= 'Cat_File_Types - ' + @vDescOperationCRUD 
+	DECLARE @vDescription		Varchar(255)	= 'Cat_Accounts - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spCat_File_Types_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdFileType = '" + ISNULL(CAST(@pvIdFileType AS VARCHAR),'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "', @pvFileNamePrefix = '" + ISNULL(@pvFileNamePrefix,'NULL') + "', @pvPath = '" + ISNULL(@pvPath,'NULL') + "', @pvExtension = '" + ISNULL(@pvExtension,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand	Varchar(Max)	= "EXEC spCat_Accounts_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @piIdAccount = '" + ISNULL(CAST(@piIdAccount AS VARCHAR),'NULL') + "', @pvIdAccountType = '" + ISNULL(@pvIdAccountType,'NULL') + "', @pvBusinessUnit = '" + ISNULL(@pvBusinessUnit,'NULL') + "', @pvObjectAccount = '" + ISNULL(@pvObjectAccount,'NULL') + "', @pvAccount_Name = '" + ISNULL(@pvAccount_Name,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'C'
 	BEGIN
-			-- Validate if the record already exists
-		IF EXISTS(SELECT * FROM Cat_File_Types WHERE Id_File_Type = @pvIdFileType )
+    IF EXISTS(SELECT * FROM Cat_Accounts WHERE Id_Account = @piIdAccount)
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don�t Exists
-		BEGIN
-			INSERT INTO Cat_File_Types 
-			   (Id_File_Type,
-				Short_Desc,
-				Long_Desc,
-				File_Name_Prefix,
-				[Path],
-				Extension,
+		ELSE -- Don't Exists
+        BEGIN
+            INSERT INTO Cat_Accounts (
+				Id_Account_Type,
+				Business_Unit,
+				Object_Account,
+				Subsidiary,
+				Account_Name,
 				[Status],
 				Modify_By,
 				Modify_Date,
 				Modify_IP)
-			VALUES 
-			   (@pvIdFileType,
-				@pvShortDesc,
-				@pvLongDesc,
-				@pvFileNamePrefix,
-				@pvPath,
-				@pvExtension,
-				@pbStatus,
-				@pvUser,
+            VALUES (
+				@pvIdAccountType,
+                @pvBusinessUnit, 
+                @pvObjectAccount,
+                @pvSubsidiary,
+                @pvAccount_Name,
+				@pbStatus,                
+                @pvUser,
 				GETDATE(),
-				@pvIP)
+                @pvIP)
+        END 
 
-		END 
 	END
 	--------------------------------------------------------------------
 	--Reads Records
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'R'
 	BEGIN
-		SELECT 
-		Id_Catalog = Id_File_Type,
-		Short_Desc,
-		Long_Desc,
-		Extension,
-		File_Name_Prefix,
-		[Path],
-		[Status],
-		Modify_Date,
-		Modify_By,
-		Modify_IP
-		FROM Cat_File_Types 
-
-
+		SELECT
+		A.Id_Account, 
+		A.Id_Account_Type,
+		Account_Type_Desc = T.Short_Desc,
+		A.Business_Unit,
+		A.Object_Account,
+		A.Subsidiary,
+		A.Account_Name,
+		A.[Status],
+		A.Modify_By,
+		A.Modify_Date,
+		A.Modify_IP
+		FROM Cat_Accounts A
+		INNER JOIN Cat_Account_Types T ON
+		A.Id_Account_Type = T.Id_Account_Type		
 		WHERE 
-			(@pvIdFileType	= '' OR Id_File_Type = @pvIdFileType) AND
-			(@pvExtension	= '' OR Extension = @pvExtension) AND			
-			(@pvShortDesc	= '' OR Short_Desc LIKE '%' +  @pvShortDesc + '%')	
-		ORDER BY  Id_File_Type
+		(@piIdAccount = '' OR A.Id_Account = @piIdAccount) AND
+		(@pvIdAccountType = '' OR A.Id_Account_Type = @pvIdAccountType)
+		ORDER BY  Id_Account_Type
 		
 	END
 
@@ -120,18 +117,21 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'U'
 	BEGIN
-		UPDATE Cat_File_Types
-		SET Short_Desc			= @pvShortDesc,
-			Long_Desc			= @pvLongDesc,
-			File_Name_Prefix	= @pvFileNamePrefix,
-			[Path]				= @pvPath,
-			Extension			= @pvExtension,
-			[Status]			= @pbStatus,
-			Modify_By			= @pvUser,
-			Modify_Date			= GETDATE(),
-			Modify_IP			= @pvIP
-		WHERE Id_File_Type = @pvIdFileType
+        UPDATE Cat_Accounts
+        SET Id_Account_Type	= @pvIdAccountType,
+			Business_Unit	= @pvBusinessUnit,
+			Object_Account	= @pvObjectAccount,
+			Subsidiary		= @pvSubsidiary,
+			Account_Name	= @pvAccount_Name,
+			[Status]		= @pbStatus,
+			Modify_By		= @pvUser,
+			Modify_Date		= GETDATE(),
+			Modify_IP		= @pvIP
+		
+        WHERE Id_Account = @piIdAccount
+    
 	END
+
 	--------------------------------------------------------------------
 	--Delete Records
 	--------------------------------------------------------------------
