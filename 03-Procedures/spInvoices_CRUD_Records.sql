@@ -22,12 +22,13 @@ Example:
 
 select newid()
 			EXEC spInvoices_CRUD_Records	@pvOptionCRUD				= 'C', 
-											@pvUUID						= 'D48F641F-E656-4B35-AAF6-DBAEA5D61F54',
-											@pvIdInvoiceType			= 'E',
+											@pvUUID						= 'D48F641F-E656-4B35-AAF6-DBAEA5D61F60',
+											@pvIdInvoiceType			= 'ICP',
 											@piIdCompany				= 1,
 											@piIdVendor					= 1,
 											@pvIdReceiptType			= 'I',
 											@pvIdEntityType				= 'M',
+											@pvIdCurrency				= 'MXN'
 											@pvSerie					= 'Serie',
 											@pvFolio					= 'Folio',
 											@pvInvoiceDate				= '20211109',
@@ -36,10 +37,14 @@ select newid()
 											@piRequestNumber			= 1234,
 											@pvDueDate					= '',
 											@pvPaymentDate				= '',
-											@pvIdWorkflowType			= 'WF-CP',
+											@pvIdWorkflowType			= 'WF-CPAS',
 											@piIdWorkflowStatus			= 100, 
-											@piIdWorkflowStatusChange	= 100,
+											@piIdWorkflowStatusChange	= 900,
 											@pvWorkflowComments			= 'Carga de archivo',
+											@pfSubTotal					= 100,
+											@pfTransferred_Taxes		= 200,
+											@pfWithholded_Taxes			= 300,
+											@pfTotal					= 400,	
 											@pvUser				= 'AZEPEDA',
 											@pvIP				= '0.0.0.0'
 
@@ -53,10 +58,9 @@ select newid()
 											@pvFolio = '001', 
 											@pvInvoiceDate='20211116', @pvInvoiceDateFinal = '20211116'
 
-			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'R', @piIdWorkflowStatus = 5
-			
-			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'R', 
-											@pvVendorTaxId= 'SA',
+			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'R', @piIdWorkflowStatus = 5			
+			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'R', @pvVendorTaxId= 'SA',
+			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'R', @pvSerieFolio= 'SerieFolio'
 
 			EXEC spInvoices_CRUD_Records @pvOptionCRUD	= 'U', 
 											@pvUUID			= 'D48F641F-E656-4B35-AAF6-DBAEA5D61F54',
@@ -68,7 +72,8 @@ select newid()
 			
 			EXEC spInvoices_CRUD_Records @pvOptionCRUD = 'D', @piIdCompany = 2, @piIdVendor = 1
 
-
+select * from Invoices
+select * from workflow where Record_Identifier = '79b8d399-5d14-477a-9ac5-a86286a8702c'
 */
 CREATE PROCEDURE [dbo].spInvoices_CRUD_Records
 @pvOptionCRUD				Varchar(1),
@@ -81,8 +86,10 @@ CREATE PROCEDURE [dbo].spInvoices_CRUD_Records
 @pvVendorTaxId				Varchar(20) = '',
 @pvIdReceiptType			Varchar(10) = '',
 @pvIdEntityType				Varchar(10) = '',
+@pvIdCurrency				Varchar(50) = '',
 @pvSerie					Varchar(50) = '',
 @pvFolio					Varchar(50) = '',
+@pvSerieFolio				Varchar(100) = '',
 @pvInvoiceDate				Varchar(8) = '',
 @pvInvoiceDateFinal			Varchar(8) = '',
 @pvXMLPath					Varchar(255) = '',
@@ -94,6 +101,10 @@ CREATE PROCEDURE [dbo].spInvoices_CRUD_Records
 @piIdWorkflowStatus			Int			= 0, 
 @piIdWorkflowStatusChange	Int			= 0,
 @pvWorkflowComments			Varchar(MAX)= '',
+@pfSubTotal					Float 		= 0,
+@pfTransferred_Taxes		Float 		= 0,
+@pfWithholded_Taxes			Float 		= 0,
+@pfTotal					Float 		= 0,
 @pbStatus					Bit			= 1,
 @pvUser						Varchar(50) = '',
 @pvIP						Varchar(20) = ''
@@ -115,7 +126,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Invoices - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvUUID =  '" + ISNULL(@pvUUID,'NULL') + "', @pnIdWorkflow = " + ISNULL(CAST(@pnIdWorkflow AS VARCHAR),'NULL') + ", @pvIdInvoiceType = '" + ISNULL(CAST(@pvIdInvoiceType AS VARCHAR),'NULL') + "', @piIdCompany = " + ISNULL(CAST(@piIdCompany AS VARCHAR),'NULL') + ", @piIdVendor = " + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + ", @pvIdReceiptType = '" + ISNULL(@pvIdReceiptType,'NULL') + "', @pvIdEntityType = '" + ISNULL(@pvIdEntityType,'NULL') + "', @pvSerie = '" + ISNULL(@pvSerie,'NULL') + "', @pvFolio = '" + ISNULL(@pvFolio,'NULL') + "', @pvInvoiceDate = '" + ISNULL(@pvInvoiceDate,'NULL') + "', @pvXMLPath = '" + ISNULL(@pvXMLPath,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvPDFPath = '" + ISNULL(@pvPDFPath,'NULL') + "', @piRequestNumber = '" + ISNULL(CAST(@piRequestNumber AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvUUID =  '" + ISNULL(@pvUUID,'NULL') + "', @pnIdWorkflow = " + ISNULL(CAST(@pnIdWorkflow AS VARCHAR),'NULL') + ", @pvIdInvoiceType = '" + ISNULL(CAST(@pvIdInvoiceType AS VARCHAR),'NULL') + "', @piIdCompany = " + ISNULL(CAST(@piIdCompany AS VARCHAR),'NULL') + ", @piIdVendor = " + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + ", @pvIdReceiptType = '" + ISNULL(@pvIdReceiptType,'NULL') + "', @pvIdEntityType = '" + ISNULL(@pvIdEntityType,'NULL') + "', @pvIdCurrency = '" + ISNULL(@pvIdCurrency,'NULL') + "', @pvSerie = '" + ISNULL(@pvSerie,'NULL') + "', @pvFolio = '" + ISNULL(@pvFolio,'NULL') + "', @pvInvoiceDate = '" + ISNULL(@pvInvoiceDate,'NULL') + "', @pvXMLPath = '" + ISNULL(@pvXMLPath,'NULL') + "', @pvPDFPath = '" + ISNULL(@pvPDFPath,'NULL') + "', @piRequestNumber = " + ISNULL(CAST(@piRequestNumber AS VARCHAR),'NULL') + ", @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvDueDate = '" + ISNULL(@pvDueDate,'NULL') + "', @pvPaymentDate = '" + ISNULL(@pvPaymentDate,'NULL') + "', @pvIdWorkflowType = '" + ISNULL(@pvIdWorkflowType,'NULL') + "', @piIdWorkflowStatus = '" + ISNULL(CAST(@piIdWorkflowStatus AS VARCHAR),'NULL') + "', @piIdWorkflowStatusChange = '" + ISNULL(CAST(@piIdWorkflowStatusChange AS VARCHAR),'NULL') + "', @pvWorkflowComments = '" + ISNULL(@pvWorkflowComments,'NULL') + "', @pfSubTotal = '" + ISNULL(CAST(@pfSubTotal AS VARCHAR),'NULL') + "', @pfTransferred_Taxes = '" + ISNULL(CAST(@pfTransferred_Taxes AS VARCHAR),'NULL') + "', @pfWithholded_Taxes = '" + ISNULL(CAST(@pfWithholded_Taxes AS VARCHAR),'NULL') + "', @pfTotal = '" + ISNULL(CAST(@pfTotal AS VARCHAR),'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "',  @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -140,6 +151,7 @@ BEGIN TRY
 					Id_Vendor,
 					Id_Receipt_Type,
 					Id_Entity_Type,
+					Id_Currency,
 					Serie,
 					Folio,
 					Invoice_Date,
@@ -149,6 +161,10 @@ BEGIN TRY
 					Due_Date,
 					Payment_Date,
 					[Status],
+					SubTotal,
+					Transferred_Taxes,
+					Withholded_Taxes,
+					Total,
 					Modify_By,
 					Modify_Date,
 					Modify_IP)
@@ -162,6 +178,7 @@ BEGIN TRY
 					@piIdVendor,
 					@pvIdReceiptType,
 					@pvIdEntityType,
+					@pvIdCurrency,
 					@pvSerie,
 					@pvFolio,
 					@pvInvoiceDate,
@@ -171,6 +188,10 @@ BEGIN TRY
 					@pvDueDate,
 					@pvPaymentDate,
 					@pbStatus,
+					@pfSubTotal,
+					@pfTransferred_Taxes,
+					@pfWithholded_Taxes,
+					@pfTotal,	
 					@pvUser,
 					GETDATE(),
 					@pvIP	)
@@ -214,6 +235,8 @@ BEGIN TRY
 				Receipt_Type_Desc = RT.Short_Desc,
 				CP.Id_Entity_Type,
 				Entity_Type_Desc = ET.Short_Desc,
+				CP.Id_Currency,
+				Currency_Desc = CU.Short_Desc,
 				CP.Serie,
 				CP.Folio,
 				CP.Invoice_Date,
@@ -222,6 +245,10 @@ BEGIN TRY
 				CP.Request_Number,
 				CP.Due_Date,
 				CP.Payment_Date,
+				CP.SubTotal,
+				CP.Transferred_Taxes,
+				CP.Withholded_Taxes,
+				CP.Total,
 				CP.[Status],
 				CP.Modify_By,
 				CP.Modify_Date,
@@ -249,7 +276,10 @@ BEGIN TRY
 
 		INNER JOIN Cat_Workflow_Status WS ON
 		WF.Id_Workflow_Type = WS.Id_Workflow_Type AND
-		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status		
+		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
+
+		INNER JOIN SAT_Cat_Currencies CU ON 
+		CP.Id_Currency = CU.Id_Currency		
 
 		WHERE
 		(@pnIdWorkflow			= 0	 OR CP.Id_Workflow = @pnIdWorkflow) AND
@@ -261,7 +291,9 @@ BEGIN TRY
 		(@piIdVendor			= -1 OR CP.Id_Vendor = @piIdVendor) AND
 		(@pvVendorTaxId			= '' OR V.Tax_Id LIKE '%' +  @pvVendorTaxId + '%') AND				
 		(@pvInvoiceDate			= '' OR CONVERT(VARCHAR(10),CP.Invoice_Date,112) BETWEEN @pvInvoiceDate AND @pvInvoiceDateFinal) AND 
-		(@piIdWorkflowStatus	= 0 OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) 			
+		(@piIdWorkflowStatus	= 0  OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) AND
+		(@pvSerieFolio			= '' OR RTRIM(LTRIM(CP.Serie)) + RTRIM(LTRIM(CP.Folio)) =  @pvSerieFolio) AND 
+		(@pvIdCurrency			= 0	 OR CP.Id_Currency = @pvIdCurrency) 		
 		
 
 		ORDER BY CP.UUID, CP.Id_Workflow, CP.Id_Company, CP.Id_Vendor 		

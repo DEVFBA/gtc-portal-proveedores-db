@@ -42,15 +42,17 @@ Example:
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R'  
 
-        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 6
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 27
 
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U'
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'D'
 
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'G', @piIdInvoicePool = 21
+
         SELECT * FROM Invoices_Pools_Header
 		SELECT * FROM Invoices_Pools_Detail
-		SELECT * FROM workflow
+		SELECT * FROM workflow where Id_workflow in (497,498,502)
 
 
 */
@@ -169,6 +171,9 @@ BEGIN TRY
 				Header_Total_Invoices 	= PH.Total_Invoices,
 				Header_Total_Amount 	= PH.Total_Amount,			
                 Header_Comments 		= PH.Comments,
+				Header_Id_Workflow 		= PH.Id_Workflow,
+				Header_Id_Workflow_Status_Change = WF.Id_Workflow_Status_Change,
+				Header_Workflow_Status_Change = WS.Short_Desc,
 				--Details
                 PD.UUID,
 				I.Id_Company,
@@ -176,7 +181,11 @@ BEGIN TRY
 				I.Id_Vendor,
 				Vendor = V.Name,
 				I.Serie,
-				I.Folio,				
+				I.Folio,
+				I.SubTotal,
+				I.Transferred_Taxes,
+				I.Withholded_Taxes,
+				I.Total,
                 PD.Id_Workflow,
 				PH.Modify_By,
 				PH.Modify_Date,
@@ -205,9 +214,36 @@ BEGIN TRY
 		PH.Id_Vendor = VH.Id_Vendor AND
 		VH.[Status] = 1
 
+		INNER JOIN Workflow WF ON 
+		PH.Id_Workflow = WF.Id_Workflow
+
+		INNER JOIN Cat_Workflow_Status WS ON 
+		WF.Id_Workflow_Type = WS.Id_Workflow_Type AND 
+		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
+
 		WHERE 
 		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
 		ORDER BY  PH.Id_Invoice_Pool, PD.UUID	
+	END
+
+	--------------------------------------------------------------------
+	--Reads Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'G'
+	BEGIN
+	SET LANGUAGE Spanish
+		SELECT 	[Month] 			= MONTH(I.Invoice_Date),
+				[MonthName] 		= DATENAME(MONTH,I.Invoice_Date),
+				SubTotal 			= SUM(SubTotal),
+				Transferred_Taxes 	= SUM(Transferred_Taxes),
+				Withholded_Taxes 	= SUM(Withholded_Taxes),
+				Total				= SUM(Total)
+		FROM Invoices_Pools_Detail PD
+		INNER JOIN Invoices I ON
+		PD.UUID = I.UUID
+		WHERE Id_Invoice_Pool = @piIdInvoicePool
+		GROUP BY MONTH(I.Invoice_Date), DATENAME(MONTH,I.Invoice_Date)
+		ORDER BY MONTH(I.Invoice_Date)
 	END
 
 	--------------------------------------------------------------------
@@ -246,7 +282,7 @@ BEGIN TRY
 	
 	SET NOCOUNT OFF
 	
-	IF @pvOptionCRUD <> 'R'
+	IF @pvOptionCRUD NOT IN('R','G')
 	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog, Id_Invoice_Pool = @piIdInvoicePool FROM vwSecurityCodes WHERE Code = @iCode
 
 END TRY

@@ -92,8 +92,10 @@ BEGIN TRY
 	BEGIN
 		SELECT
 		A.Id_Account, 
+		RAT.Id_Role,
 		A.Id_Account_Type,
 		Account_Type_Desc = T.Short_Desc,
+		T.Freight_Withholding,
 		A.Business_Unit,
 		A.Object_Account,
 		A.Subsidiary,
@@ -103,12 +105,20 @@ BEGIN TRY
 		A.Modify_Date,
 		A.Modify_IP
 		FROM Cat_Accounts A
+		
 		INNER JOIN Cat_Account_Types T ON
-		A.Id_Account_Type = T.Id_Account_Type		
+		A.Id_Account_Type = T.Id_Account_Type AND
+		T.[Status] = 1
+
+		
+		INNER JOIN Role_Account_Type RAT ON 
+		T.Id_Account_Type = RAT.Id_Account_Type AND
+		RAT.[Status] = 1
+
 		WHERE 
 		(@piIdAccount = '' OR A.Id_Account = @piIdAccount) AND
 		(@pvIdAccountType = '' OR A.Id_Account_Type = @pvIdAccountType)
-		ORDER BY  Id_Account_Type
+		ORDER BY  T.Id_Account_Type
 		
 	END
 

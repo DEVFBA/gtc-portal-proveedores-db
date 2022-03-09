@@ -123,6 +123,8 @@ BEGIN TRY
 		Role_Desc = R.Short_Desc,
 		RA.[User],
 		U.[Name],
+		D.Id_Department,
+		Department_Desc = D.Short_Desc,
 		RA.Id_Approval_Type,
 		Approval_Type_Desc = T.Short_Desc,
 		RA.Apply_Sign,
@@ -134,13 +136,20 @@ BEGIN TRY
 		FROM Role_Approvals RA
 
 		INNER JOIN Security_Roles R ON 
-		RA.Id_Role = R.Id_Role
+		RA.Id_Role = R.Id_Role AND
+		R.[Status] = 1
 
 		INNER JOIN Security_Users U ON 
-		RA.[User] = U.[User]
+		RA.[User] = U.[User] AND 
+		U.[Status]=1
 
 		INNER JOIN Cat_Approval_Types T ON 
-		RA.Id_Approval_Type = T.Id_Approval_Type
+		RA.Id_Approval_Type = T.Id_Approval_Type AND
+		T.[Status] = 1
+
+		INNER JOIN Cat_Departments D ON 
+		U.Id_Department = D.Id_Department AND
+		D.[Status] = 1
 		
 		WHERE 
 		(@pvIdRole			= ''	OR RA.Id_Role = @pvIdRole) AND 

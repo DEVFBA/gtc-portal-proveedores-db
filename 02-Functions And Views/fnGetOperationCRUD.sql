@@ -39,6 +39,7 @@ BEGIN
 								WHEN 'L' THEN 'Load Records'
 								WHEN 'W' THEN 'Download Records'
 								WHEN 'VA' THEN 'API Validate Access'
+								WHEN 'S' THEN 'Read Group Records'
 								ELSE 'N/A'
 							 END
 	

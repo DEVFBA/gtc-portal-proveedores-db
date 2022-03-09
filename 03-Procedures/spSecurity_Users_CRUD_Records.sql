@@ -22,6 +22,7 @@ Example:
 			spSecurity_Users_CRUD_Records	@pvOptionCRUD			= 'C',											
 											@pvIdUser				= 'alejandro.zepeda@gmail.com' , 
 											@pvIdRole				= 'ADMIN', 
+											@pvIdDepartment			= '001',
 											@piIdVendor				= 2,
 											@pvPassword				= '6c690c09caf5abbab6178e980881cbf5568481e48cd344e4b726c34c6e81be57', 
 											@pvName					= 'Alejandro Zepeda', 
@@ -45,7 +46,8 @@ Example:
 
 			spSecurity_Users_CRUD_Records	@pvOptionCRUD			= 'U',	
 											@pvIdUser				= 'alejandro.zepeda@gmail.com' , 
-											@pvIdRole				= 'ADMIN', 
+											@pvIdRole				= 'ADMIN',
+											@pvIdDepartment			= '001',
 											@piIdVendor				= 2,
 											@pvPassword				= '', 
 											@pvName					= 'Alejandro Zepeda', 
@@ -64,6 +66,7 @@ CREATE PROCEDURE [dbo].spSecurity_Users_CRUD_Records
 @pvOptionCRUD			Varchar(5),
 @pvIdUser				Varchar(60)	= '',
 @pvIdRole				Varchar(10)	= '', 
+@pvIdDepartment	    	Varchar	(10)='',
 @piIdVendor				Int			= -1,
 @pvPassword				Varchar(255)= '',
 @pvName					Varchar(255)= '',
@@ -89,7 +92,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Security_Access - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @pvIdDepartment = '" + ISNULL(CAST(@pvIdDepartment AS VARCHAR),'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -100,13 +103,14 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Don't Exists
 		BEGIN
 			IF @pvFinalEffectiveDate = '' SET @pvFinalEffectiveDate = NULL
 
 			INSERT INTO Security_Users (
 				[User],
 				Id_Role,
+				Id_Department,
 				Id_Vendor,
 				[Password],
 				[Name],
@@ -120,6 +124,7 @@ BEGIN TRY
 			VALUES (
 				@pvIdUser,
 				@pvIdRole,
+				@pvIdDepartment,
 				@piIdVendor,
 				@pvPassword,
 				@pvName,
@@ -143,6 +148,8 @@ BEGIN TRY
 		U.[User],
 		U.Id_Role,
 		Role_Desc = R.Short_Desc,
+		U.Id_Department, 
+		Department_Desc = D.Short_Desc, 
 		U.Id_Vendor,
 		Vendor = V.[Name],
 		U.[Password],
@@ -162,11 +169,15 @@ BEGIN TRY
 		INNER JOIN Cat_Vendors V ON 
 		U.Id_Vendor = V.Id_Vendor
 
+		LEFT OUTER JOIN Cat_Departments D ON
+		U.Id_Department = D.Id_Department
+
 		WHERE 
 		
 		(@pvIdRole		= ''	OR U.Id_Role = @pvIdRole) AND 
 		(@pvIdUser		= ''	OR U.[User] = @pvIdUser) AND
-		(@piIdVendor	= -1	OR V.Id_Vendor = @piIdVendor) 
+		(@piIdVendor	= -1	OR U.Id_Vendor = @piIdVendor) AND
+		(@pvIdDepartment	= ''	OR U.Id_Department = @pvIdDepartment)  
 		  
 		
 		ORDER BY [User]
@@ -203,6 +214,7 @@ BEGIN TRY
 		UPDATE Security_Users 
 		SET 
 			Id_Role				= @pvIdRole,
+			Id_Department		= @pvIdDepartment,
 			[Password]			= (CASE WHEN @pvPassword = '' THEN [Password] ELSE @pvPassword END) ,
 			[Name]				= @pvName,
 			Temporal_Password	= @pbTempPassword,

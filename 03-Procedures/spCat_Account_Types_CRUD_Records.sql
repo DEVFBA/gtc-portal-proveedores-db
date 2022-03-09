@@ -19,22 +19,23 @@ Autor:		Alejandro Zepeda
 Desc:		Cat_Account_Types | Create - Read - Upadate - Delete 
 Date:		16/02/2022
 Example:
-			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'C', @pvIdAccountType = 'RETFLECOM' , @pvShortDesc = 'Desc Short Desc', @pvLongDesc = 'Desc Long Desc', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'C', @pvIdAccountType = 'RETFLECOM' , @pvShortDesc = 'Desc Short Desc', @pvLongDesc = 'Desc Long Desc', @pbFreightWithholding = 0, @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'R', @pvIdAccountType = 'RETFLECOM' 
 			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'R'
-			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'U', @pvIdAccountType = 'RETFLECOM' , @pvShortDesc = 'Desc Short Desc', @pvLongDesc = 'Desc Long Desc', @pbStatus = 0, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
+			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'U', @pvIdAccountType = 'RETFLECOM' , @pvShortDesc = 'Desc Short Desc', @pvLongDesc = 'Desc Long Desc',  @pbFreightWithholding = 0, @pbStatus = 0, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'D', @pvIdAccountType = 'RETFLECOM' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_Account_Types_CRUD_Records @pvOptionCRUD = 'X', @pvIdAccountType = 'RETFLECOM' , @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 
 */
 CREATE PROCEDURE [dbo].spCat_Account_Types_CRUD_Records
-@pvOptionCRUD		Varchar(1),
-@pvIdAccountType	Varchar(10) = '',
-@pvShortDesc		Varchar(50) = '',
-@pvLongDesc			Varchar(255)= '',
-@pbStatus			Bit			= 1,
-@pvUser				Varchar(50) = '',
-@pvIP				Varchar(20) = ''
+@pvOptionCRUD			Varchar(1),
+@pvIdAccountType		Varchar(10) = '',
+@pvShortDesc			Varchar(50) = '',
+@pvLongDesc				Varchar(255)= '',
+@pbFreightWithholding	Bit			= 0,
+@pbStatus				Bit			= 1,
+@pvUser					Varchar(50) = '',
+@pvIP					Varchar(20) = ''
 WITH ENCRYPTION
 AS
 
@@ -48,7 +49,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Cat_Account_Types - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand	Varchar(Max)	= "EXEC spCat_Account_Types_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdAccountType = '" + ISNULL(@pvIdAccountType,'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand	Varchar(Max)	= "EXEC spCat_Account_Types_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdAccountType = '" + ISNULL(@pvIdAccountType,'NULL') + "', @pvShortDesc = '" + ISNULL(@pvShortDesc,'NULL') + "', @pvLongDesc = '" + ISNULL(@pvLongDesc,'NULL') + "', @pbFreightWithholding = '" + ISNULL(CAST(@pbFreightWithholding AS VARCHAR),'NULL') + "',  @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -64,6 +65,7 @@ BEGIN TRY
                 Id_Account_Type,
                 Short_Desc,
                 Long_Desc,
+				Freight_Withholding,
                 [Status],
                 Modify_Date,
                 Modify_By,
@@ -72,6 +74,7 @@ BEGIN TRY
                 @pvIdAccountType, 
                 @pvShortDesc,
                 @pvLongDesc,
+				@pbFreightWithholding,
                 @pbStatus,
                 GETDATE(),
                 @pvUser,
@@ -88,6 +91,7 @@ BEGIN TRY
 		Id_Account_Type,
 		Short_Desc,
 		Long_Desc,
+		Freight_Withholding,
 		[Status],
 		Modify_Date,
 		Modify_By,
@@ -104,12 +108,13 @@ BEGIN TRY
 	IF @pvOptionCRUD = 'U'
 	BEGIN
         UPDATE Cat_Account_Types
-        SET Short_Desc  = @pvShortDesc,
-            Long_Desc   = @pvLongDesc,
-            [Status]    = @pbStatus,
-            Modify_Date = GETDATE(),
-            Modify_By   = @pvUser,
-            Modify_IP   = @pvIP
+        SET Short_Desc  		= @pvShortDesc,
+            Long_Desc   		= @pvLongDesc,
+			Freight_Withholding	= @pbFreightWithholding,
+            [Status]    		= @pbStatus,
+            Modify_Date 		= GETDATE(),
+            Modify_By   		= @pvUser,
+            Modify_IP   		= @pvIP
         WHERE Id_Account_Type = @pvIdAccountType
     
 	END
