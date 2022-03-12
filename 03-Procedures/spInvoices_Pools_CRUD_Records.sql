@@ -44,6 +44,8 @@ Example:
 
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 27
 
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @pvUUID = '518cee31-8e2c-4910-b2f5-996cdf9d29b2'
+
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U'
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'D'
@@ -67,7 +69,8 @@ CREATE PROCEDURE [dbo].spInvoices_Pools_CRUD_Records
 @pnIdWorkflow				Numeric		= 0,
 @pvIdWorkflowType			Varchar(10) = '',
 @piIdWorkflowStatus			Int			= 0, 
-@piIdWorkflowStatusChange	Int			= 0,		
+@piIdWorkflowStatusChange	Int			= 0,
+@pvUUID						Varchar(50) = '',
 @pvUser						Varchar(50) = '',
 @pvIP				    	Varchar(20) = ''
 WITH ENCRYPTION AS
@@ -222,7 +225,8 @@ BEGIN TRY
 		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
 
 		WHERE 
-		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
+		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) AND
+		(@pvUUID = '' OR PD.UUID = @pvUUID)
 		ORDER BY  PH.Id_Invoice_Pool, PD.UUID	
 	END
 
