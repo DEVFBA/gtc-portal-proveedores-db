@@ -28,7 +28,7 @@ select newid()
 											@piIdVendor					= 1,
 											@pvIdReceiptType			= 'I',
 											@pvIdEntityType				= 'M',
-											@pvIdCurrency				= 'MXN'
+											@pvIdCurrency				= 'MXN',
 											@pvSerie					= 'Serie',
 											@pvFolio					= 'Folio',
 											@pvInvoiceDate				= '20211109',
@@ -45,6 +45,10 @@ select newid()
 											@pfTransferred_Taxes		= 200,
 											@pfWithholded_Taxes			= 300,
 											@pfTotal					= 400,	
+											@pvIdAgreementStatus		= null,
+											@pvDocumentId				= 'DocId',
+											@pvAgreementId				= 'AgreementId',
+											@pvNextSigner				= 'NextSigner',
 											@pvUser				= 'AZEPEDA',
 											@pvIP				= '0.0.0.0'
 
@@ -105,6 +109,10 @@ CREATE PROCEDURE [dbo].spInvoices_CRUD_Records
 @pfTransferred_Taxes		Float 		= 0,
 @pfWithholded_Taxes			Float 		= 0,
 @pfTotal					Float 		= 0,
+@pvIdAgreementStatus		varchar(10) = null,
+@pvDocumentId				varchar(50) = null,
+@pvAgreementId				varchar(50) = null,
+@pvNextSigner				varchar(50) = null,
 @pbStatus					Bit			= 1,
 @pvUser						Varchar(50) = '',
 @pvIP						Varchar(20) = ''
@@ -126,7 +134,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Invoices - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvUUID =  '" + ISNULL(@pvUUID,'NULL') + "', @pnIdWorkflow = " + ISNULL(CAST(@pnIdWorkflow AS VARCHAR),'NULL') + ", @pvIdInvoiceType = '" + ISNULL(CAST(@pvIdInvoiceType AS VARCHAR),'NULL') + "', @piIdCompany = " + ISNULL(CAST(@piIdCompany AS VARCHAR),'NULL') + ", @piIdVendor = " + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + ", @pvIdReceiptType = '" + ISNULL(@pvIdReceiptType,'NULL') + "', @pvIdEntityType = '" + ISNULL(@pvIdEntityType,'NULL') + "', @pvIdCurrency = '" + ISNULL(@pvIdCurrency,'NULL') + "', @pvSerie = '" + ISNULL(@pvSerie,'NULL') + "', @pvFolio = '" + ISNULL(@pvFolio,'NULL') + "', @pvInvoiceDate = '" + ISNULL(@pvInvoiceDate,'NULL') + "', @pvXMLPath = '" + ISNULL(@pvXMLPath,'NULL') + "', @pvPDFPath = '" + ISNULL(@pvPDFPath,'NULL') + "', @piRequestNumber = " + ISNULL(CAST(@piRequestNumber AS VARCHAR),'NULL') + ", @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvDueDate = '" + ISNULL(@pvDueDate,'NULL') + "', @pvPaymentDate = '" + ISNULL(@pvPaymentDate,'NULL') + "', @pvIdWorkflowType = '" + ISNULL(@pvIdWorkflowType,'NULL') + "', @piIdWorkflowStatus = '" + ISNULL(CAST(@piIdWorkflowStatus AS VARCHAR),'NULL') + "', @piIdWorkflowStatusChange = '" + ISNULL(CAST(@piIdWorkflowStatusChange AS VARCHAR),'NULL') + "', @pvWorkflowComments = '" + ISNULL(@pvWorkflowComments,'NULL') + "', @pfSubTotal = '" + ISNULL(CAST(@pfSubTotal AS VARCHAR),'NULL') + "', @pfTransferred_Taxes = '" + ISNULL(CAST(@pfTransferred_Taxes AS VARCHAR),'NULL') + "', @pfWithholded_Taxes = '" + ISNULL(CAST(@pfWithholded_Taxes AS VARCHAR),'NULL') + "', @pfTotal = '" + ISNULL(CAST(@pfTotal AS VARCHAR),'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "',  @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvUUID =  '" + ISNULL(@pvUUID,'NULL') + "', @pnIdWorkflow = " + ISNULL(CAST(@pnIdWorkflow AS VARCHAR),'NULL') + ", @pvIdInvoiceType = '" + ISNULL(CAST(@pvIdInvoiceType AS VARCHAR),'NULL') + "', @piIdCompany = " + ISNULL(CAST(@piIdCompany AS VARCHAR),'NULL') + ", @piIdVendor = " + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + ", @pvIdReceiptType = '" + ISNULL(@pvIdReceiptType,'NULL') + "', @pvIdEntityType = '" + ISNULL(@pvIdEntityType,'NULL') + "', @pvIdCurrency = '" + ISNULL(@pvIdCurrency,'NULL') + "', @pvSerie = '" + ISNULL(@pvSerie,'NULL') + "', @pvFolio = '" + ISNULL(@pvFolio,'NULL') + "', @pvInvoiceDate = '" + ISNULL(@pvInvoiceDate,'NULL') + "', @pvXMLPath = '" + ISNULL(@pvXMLPath,'NULL') + "', @pvPDFPath = '" + ISNULL(@pvPDFPath,'NULL') + "', @piRequestNumber = " + ISNULL(CAST(@piRequestNumber AS VARCHAR),'NULL') + ", @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvDueDate = '" + ISNULL(@pvDueDate,'NULL') + "', @pvPaymentDate = '" + ISNULL(@pvPaymentDate,'NULL') + "', @pvIdWorkflowType = '" + ISNULL(@pvIdWorkflowType,'NULL') + "', @piIdWorkflowStatus = '" + ISNULL(CAST(@piIdWorkflowStatus AS VARCHAR),'NULL') + "', @piIdWorkflowStatusChange = '" + ISNULL(CAST(@piIdWorkflowStatusChange AS VARCHAR),'NULL') + "', @pvWorkflowComments = '" + ISNULL(@pvWorkflowComments,'NULL') + "', @pfSubTotal = '" + ISNULL(CAST(@pfSubTotal AS VARCHAR),'NULL') + "', @pfTransferred_Taxes = '" + ISNULL(CAST(@pfTransferred_Taxes AS VARCHAR),'NULL') + "', @pfWithholded_Taxes = '" + ISNULL(CAST(@pfWithholded_Taxes AS VARCHAR),'NULL') + "', @pfTotal = '" + ISNULL(CAST(@pfTotal AS VARCHAR),'NULL') + "', @pvIdAgreementStatus = '" + ISNULL(@pvIdAgreementStatus,'NULL') + "', @pvDocumentId = '" + ISNULL(@pvDocumentId,'NULL') + "', @pvAgreementId = '" + ISNULL(@pvAgreementId,'NULL') + "', @pvNextSigner = '" + ISNULL(@pvNextSigner,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "',  @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -165,6 +173,10 @@ BEGIN TRY
 					Transferred_Taxes,
 					Withholded_Taxes,
 					Total,
+					Id_Agreement_Status,
+					Document_Id,
+					Agreement_Id,
+					Next_Signer,
 					Modify_By,
 					Modify_Date,
 					Modify_IP)
@@ -192,6 +204,10 @@ BEGIN TRY
 					@pfTransferred_Taxes,
 					@pfWithholded_Taxes,
 					@pfTotal,	
+					@pvIdAgreementStatus,
+					@pvDocumentId,
+					@pvAgreementId,
+					@pvNextSigner,
 					@pvUser,
 					GETDATE(),
 					@pvIP	)
@@ -249,6 +265,11 @@ BEGIN TRY
 				CP.Transferred_Taxes,
 				CP.Withholded_Taxes,
 				CP.Total,
+				CP.Id_Agreement_Status,
+				Agreement_Status_Desc = ASAS.Short_Desc,
+				CP.Document_Id,
+				CP.Agreement_Id,
+				CP.Next_Signer,
 				CP.[Status],
 				CP.Modify_By,
 				CP.Modify_Date,
@@ -279,7 +300,10 @@ BEGIN TRY
 		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
 
 		INNER JOIN SAT_Cat_Currencies CU ON 
-		CP.Id_Currency = CU.Id_Currency		
+		CP.Id_Currency = CU.Id_Currency	
+		
+		LEFT OUTER JOIN Cat_Adobe_Sign_Agreement_Status  ASAS ON 
+		CP.Id_Agreement_Status = ASAS.Id_Agreement_Status
 
 		WHERE
 		(@pnIdWorkflow			= 0	 OR CP.Id_Workflow = @pnIdWorkflow) AND
@@ -293,8 +317,11 @@ BEGIN TRY
 		(@pvInvoiceDate			= '' OR CONVERT(VARCHAR(10),CP.Invoice_Date,112) BETWEEN @pvInvoiceDate AND @pvInvoiceDateFinal) AND 
 		(@piIdWorkflowStatus	= 0  OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) AND
 		(@pvSerieFolio			= '' OR RTRIM(LTRIM(CP.Serie)) + RTRIM(LTRIM(CP.Folio)) =  @pvSerieFolio) AND 
-		(@pvIdCurrency			= 0	 OR CP.Id_Currency = @pvIdCurrency) 		
-		
+		(@pvIdCurrency			= 0	 OR CP.Id_Currency = @pvIdCurrency) AND		
+		(@pvIdAgreementStatus	IS NULL  OR CP.Id_Agreement_Status = @pvIdAgreementStatus ) AND 
+		(@pvDocumentId	IS NULL  OR CP.Document_Id = @pvDocumentId ) AND 
+		(@pvAgreementId	IS NULL  OR CP.Agreement_Id = @pvAgreementId ) AND 
+		(@pvNextSigner	IS NULL  OR CP.Next_Signer = @pvNextSigner ) 
 
 		ORDER BY CP.UUID, CP.Id_Workflow, CP.Id_Company, CP.Id_Vendor 		
 	END
