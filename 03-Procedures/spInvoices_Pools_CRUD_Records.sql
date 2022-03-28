@@ -37,10 +37,6 @@ Example:
 											@pvIdWorkflowType			= 'WF-POOL',
 											@piIdWorkflowStatus			= 100,
 											@piIdWorkflowStatusChange	= 100,
-											@pvIdAgreementStatus		= null,
-											@pvDocumentId				= 'DocId',
-											@pvAgreementId				= 'AgreementId',
-											@pvNextSigner				= 'NextSigner',
 											@pvUser 					= 'AZEPEDA', 
                                             @pvIP 						='192.168.1.254'
         
@@ -50,8 +46,11 @@ Example:
 
 		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @pvUUID = '518cee31-8e2c-4910-b2f5-996cdf9d29b2'
 
-        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U'
-        
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvIdAgreementStatus = 
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvDocumentId = 'Doc01'
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvAgreementId = 'Agreem01'
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvNextSigner = 'Next01'
+
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'D'
 
 		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'G', @piIdInvoicePool = 21
@@ -284,7 +283,26 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'U'
 	BEGIN
-	   SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+		IF @pvIdAgreementStatus IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Id_Agreement_Status = @pvIdAgreementStatus
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
+		IF @pvDocumentId IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Document_Id = @pvDocumentId
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
+		IF @pvAgreementId IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Agreement_Id = @pvAgreementId
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+		
+		IF @pvNextSigner IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Next_Signer = @pvNextSigner
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
 	END
 
 	--------------------------------------------------------------------

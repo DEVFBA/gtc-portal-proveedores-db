@@ -45,10 +45,6 @@ select newid()
 											@pfTransferred_Taxes		= 200,
 											@pfWithholded_Taxes			= 300,
 											@pfTotal					= 400,	
-											@pvIdAgreementStatus		= null,
-											@pvDocumentId				= 'DocId',
-											@pvAgreementId				= 'AgreementId',
-											@pvNextSigner				= 'NextSigner',
 											@pvUser				= 'AZEPEDA',
 											@pvIP				= '0.0.0.0'
 
