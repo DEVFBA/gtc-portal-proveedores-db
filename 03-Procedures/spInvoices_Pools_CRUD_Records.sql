@@ -37,6 +37,8 @@ Example:
 											@pvIdWorkflowType			= 'WF-POOL',
 											@piIdWorkflowStatus			= 100,
 											@piIdWorkflowStatusChange	= 100,
+											@pvGeneratedBy				= 'AZEPEDA',
+											@pvPath						= 'C:\',
 											@pvUser 					= 'AZEPEDA', 
                                             @pvIP 						='192.168.1.254'
         
@@ -78,6 +80,8 @@ CREATE PROCEDURE [dbo].spInvoices_Pools_CRUD_Records
 @pvDocumentId				varchar(50) = null,
 @pvAgreementId				varchar(50) = null,
 @pvNextSigner				varchar(50) = null,
+@pvGeneratedBy				varchar(60) = null,
+@pvPath						varchar(255) = null,
 @pvUser						Varchar(50) = '',
 @pvIP				    	Varchar(20) = ''
 WITH ENCRYPTION AS
@@ -122,6 +126,8 @@ BEGIN TRY
 				Document_Id,
 				Agreement_Id,
 				Next_Signer,
+				Generated_By,
+				[Path],
 				Modify_By,
 				Modify_Date,
 				Modify_IP)
@@ -138,6 +144,8 @@ BEGIN TRY
 				@pvDocumentId,
 				@pvAgreementId,
 				@pvNextSigner,
+				@pvGeneratedBy,
+				@pvPath,
                 @pvUser,
                 GETDATE(),
                 @pvIP)
@@ -192,6 +200,13 @@ BEGIN TRY
 				Header_Id_Workflow 		= PH.Id_Workflow,
 				Header_Id_Workflow_Status_Change = WF.Id_Workflow_Status_Change,
 				Header_Workflow_Status_Change = WS.Short_Desc,
+				Header_PH.Generated_By,
+				Header_PH.[Path],
+				PH.Id_Agreement_Status,
+				Agreement_Status_Desc = ASAS.Short_Desc,
+				PH.Document_Id,
+				PH.Agreement_Id,
+				PH.Next_Signer,
 				--Details
                 PD.UUID,
 				I.Id_Company,
@@ -204,12 +219,7 @@ BEGIN TRY
 				I.Transferred_Taxes,
 				I.Withholded_Taxes,
 				I.Total,
-                PD.Id_Workflow,
-				PH.Id_Agreement_Status,
-				Agreement_Status_Desc = ASAS.Short_Desc,
-				PH.Document_Id,
-				PH.Agreement_Id,
-				PH.Next_Signer,
+                PD.Id_Workflow,				
 				PH.Modify_By,
 				PH.Modify_Date,
 				PH.Modify_IP
