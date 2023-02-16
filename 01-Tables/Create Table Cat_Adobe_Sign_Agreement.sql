@@ -53,11 +53,11 @@ go
 
 ALTER TABLE Invoices_Pools_Header ADD	Id_Agreement_Status varchar(10)          null
 GO
-ALTER TABLE Invoices_Pools_Header ADD	Document_Id			varchar(50)          null
+ALTER TABLE Invoices_Pools_Header ADD	Document_Id			varchar(500)          null
 GO
-ALTER TABLE Invoices_Pools_Header ADD	Agreement_Id        varchar(50)          null
+ALTER TABLE Invoices_Pools_Header ADD	Agreement_Id        varchar(500)          null
 GO
-ALTER TABLE Invoices_Pools_Header ADD	Next_Signer			varchar(50)          null
+ALTER TABLE Invoices_Pools_Header ADD	Next_Signer			varchar(60)          null
 GO
 
 create index IDX_FK_AGREEMENTSTATUS_INVOICES_FK on Invoices_Pools_Header (

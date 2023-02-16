@@ -75,7 +75,7 @@ CREATE PROCEDURE [dbo].spSecurity_Users_CRUD_Records
 @pbTempPassword			Bit			= 0,	
 @pvFinalEffectiveDate	Varchar(8)	= NULL,
 @pvProfilePicPath		Varchar(255)= '',
-@pvEmail				Varchar(255)= '',
+@pvEmail				Varchar(255)= NULL,
 @pbStatus				Bit			= 1,
 @pvUser					Varchar(50)	= '',
 @pvIP					Varchar(20)	= ''
@@ -226,7 +226,7 @@ BEGIN TRY
 			Temporal_Password	= @pbTempPassword,
 			Final_Effective_Date= (CASE WHEN @pvFinalEffectiveDate = '' THEN Final_Effective_Date ELSE @pvFinalEffectiveDate END),
 			Profile_Pic_Path	= (CASE WHEN @pvProfilePicPath = '' THEN Profile_Pic_Path ELSE @pvProfilePicPath END),
-			Email				= (CASE WHEN @pvEmail = '' THEN Email ELSE @pvEmail END),
+			Email				= (CASE WHEN @pvEmail IS NULL THEN Email ELSE @pvEmail END),
 			[Status]			= @pbStatus,
 			Modify_Date			= GETDATE(),
 			Modify_By			= @pvUser,
