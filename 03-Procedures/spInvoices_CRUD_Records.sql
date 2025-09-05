@@ -28,7 +28,7 @@ select newid()
 											@piIdVendor					= 1,
 											@pvIdReceiptType			= 'I',
 											@pvIdEntityType				= 'M',
-											@pvIdCurrency				= 'MXN'
+											@pvIdCurrency				= 'MXN',
 											@pvSerie					= 'Serie',
 											@pvFolio					= 'Folio',
 											@pvInvoiceDate				= '20211109',
@@ -279,7 +279,7 @@ BEGIN TRY
 		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
 
 		INNER JOIN SAT_Cat_Currencies CU ON 
-		CP.Id_Currency = CU.Id_Currency		
+		CP.Id_Currency = CU.Id_Currency			
 
 		WHERE
 		(@pnIdWorkflow			= 0	 OR CP.Id_Workflow = @pnIdWorkflow) AND
@@ -293,9 +293,7 @@ BEGIN TRY
 		(@pvInvoiceDate			= '' OR CONVERT(VARCHAR(10),CP.Invoice_Date,112) BETWEEN @pvInvoiceDate AND @pvInvoiceDateFinal) AND 
 		(@piIdWorkflowStatus	= 0  OR WF.Id_Workflow_Status_Change = @piIdWorkflowStatus ) AND
 		(@pvSerieFolio			= '' OR RTRIM(LTRIM(CP.Serie)) + RTRIM(LTRIM(CP.Folio)) =  @pvSerieFolio) AND 
-		(@pvIdCurrency			= 0	 OR CP.Id_Currency = @pvIdCurrency) 		
-		
-
+		(@pvIdCurrency			= 0	 OR CP.Id_Currency = @pvIdCurrency)
 		ORDER BY CP.UUID, CP.Id_Workflow, CP.Id_Company, CP.Id_Vendor 		
 	END
 

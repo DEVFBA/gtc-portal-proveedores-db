@@ -29,6 +29,7 @@ Example:
 											@pbTempPassword			= 0, 
 											@pvFinalEffectiveDate	= NULL, 
 											@pvProfilePicPath       = 'C:\Imagen.jpg',
+											@pvEmail				= 'correo@example.com',
 											@pbStatus				= 1, 
 											@pvUser					= 'ALZEPEDA', 
 											@pvIP					='192.168.1.254'
@@ -54,6 +55,7 @@ Example:
 											@pvFinalEffectiveDate	= '', 
 											@pbTempPassword			= 0, 
 											@pvProfilePicPath       = 'C:\Imagen.jpg',
+											@pvEmail				= 'correo@example.com',
 											@pbStatus				= 1, 
 											@pvUser					= 'ALZEPEDA', 
 											@pvIP					='192.168.1.254'
@@ -73,6 +75,7 @@ CREATE PROCEDURE [dbo].spSecurity_Users_CRUD_Records
 @pbTempPassword			Bit			= 0,	
 @pvFinalEffectiveDate	Varchar(8)	= NULL,
 @pvProfilePicPath		Varchar(255)= '',
+@pvEmail				Varchar(255)= NULL,
 @pbStatus				Bit			= 1,
 @pvUser					Varchar(50)	= '',
 @pvIP					Varchar(20)	= ''
@@ -92,7 +95,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Security_Access - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @pvIdDepartment = '" + ISNULL(CAST(@pvIdDepartment AS VARCHAR),'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @pvIdDepartment = '" + ISNULL(CAST(@pvIdDepartment AS VARCHAR),'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "',  @pvEmail = '" + ISNULL(@pvEmail,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -117,6 +120,7 @@ BEGIN TRY
 				Temporal_Password,
 				Final_Effective_Date,
 				Profile_Pic_Path,
+				Email,
 				[Status],
 				Modify_By,
 				Modify_Date,
@@ -131,6 +135,7 @@ BEGIN TRY
 				@pbTempPassword,
 				@pvFinalEffectiveDate,
 				@pvProfilePicPath,
+				@pvEmail,
 				@pbStatus,				
 				@pvUser,
 				GETDATE(),
@@ -157,6 +162,7 @@ BEGIN TRY
 		Temporal_Password,
 		Final_Effective_Date,
 		Profile_Pic_Path,
+		U.Email,
 		U.[Status],
 		U.Modify_Date,
 		U.Modify_By,
@@ -220,6 +226,7 @@ BEGIN TRY
 			Temporal_Password	= @pbTempPassword,
 			Final_Effective_Date= (CASE WHEN @pvFinalEffectiveDate = '' THEN Final_Effective_Date ELSE @pvFinalEffectiveDate END),
 			Profile_Pic_Path	= (CASE WHEN @pvProfilePicPath = '' THEN Profile_Pic_Path ELSE @pvProfilePicPath END),
+			Email				= (CASE WHEN @pvEmail IS NULL THEN Email ELSE @pvEmail END),
 			[Status]			= @pbStatus,
 			Modify_Date			= GETDATE(),
 			Modify_By			= @pvUser,
