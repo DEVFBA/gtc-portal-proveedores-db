@@ -25,7 +25,7 @@ Example:
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'R', @piIdCompany = 1,  @piIdVendor = 3
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'R', @pvUUID = '15f95f6a-3451-4530-a3e1-8eb95381d180'
 			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'U', @piIdCompany = 1, @piIdVendor = 3, @piRequestNumber = 123456, @pvUUID = '15f95f6a-3451-4530-a3e1-8eb95381d180'
-			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'D'
+			spCarta_Porte_Requests_CRUD_Records @pvOptionCRUD = 'D', @piIdCompany = 1, @piIdVendor = 3, @piRequestNumber = 123456
 
 */
 CREATE PROCEDURE [dbo].spCarta_Porte_Requests_CRUD_Records
@@ -149,15 +149,24 @@ BEGIN TRY
 			WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1
 		END
 		ELSE
-			SET @iCode	= dbo.fnGetCodes('Request Number - Not Exists')			
+			SET @iCode	= dbo.fnGetCodes('Request Number - Not Exists')		
 	END
+
+
 
 	--------------------------------------------------------------------
 	--Delete Records
 	--------------------------------------------------------------------
-	IF @pvOptionCRUD = 'D' OR @vDescOperationCRUD = 'N/A'
+	IF @pvOptionCRUD = 'D' 
 	BEGIN
-		SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+	IF EXISTS (SELECT Request_Number FROM Carta_Porte_Requests WHERE Id_Company = @piIdCompany AND Id_Vendor = @piIdVendor AND Request_Number = @piRequestNumber AND [Status] = 1)
+		BEGIN
+			UPDATE Carta_Porte_Requests
+			SET [Status] = 0
+			WHERE Id_Company = @piIdCompany AND Request_Number = @piRequestNumber AND [Status] = 1
+		END
+		ELSE
+			SET @iCode	= dbo.fnGetCodes('Request Number - Not Exists')		
 	END
 
 	--------------------------------------------------------------------

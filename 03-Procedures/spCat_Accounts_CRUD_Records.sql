@@ -20,23 +20,27 @@ Desc:		Cat_Accounts | Create - Read - Upadate - Delete
 Date:		16/02/2022
 Example:
 			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'C', @pvIdAccountType = 'RETFLECOM' ,@pvBusinessUnit = '', @pvObjectAccount = '', @pvSubsidiary = '', @pvAccount_Name = '', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
-			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R', @piIdAccount = 1
 			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R', @piIdAccount = 1
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R', @pvIdRole = 'PURFREIGHT'
+			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'R', @pbFreightWithholding = 1
 			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'U',  @piIdAccount = 1, @pvIdAccountType = 'RETFLECOM' , @pvBusinessUnit = 'x', @pvObjectAccount = 'y', @pvSubsidiary = '', @pvAccount_Name = '', @pbStatus = 1, @pvUser = 'AZEPEDA', @pvIP ='192.168.1.254'
 			spCat_Accounts_CRUD_Records @pvOptionCRUD = 'D' --No Aplica
 
 */
 CREATE PROCEDURE [dbo].spCat_Accounts_CRUD_Records
-@pvOptionCRUD		Varchar(1),
-@piIdAccount	    Int = 0,
-@pvIdAccountType	Varchar(10) = '',
-@pvBusinessUnit		Varchar(15) = '',
-@pvObjectAccount	Varchar(15) = '',
-@pvSubsidiary       Varchar(15) = '',
-@pvAccount_Name     Varchar(50) = '',
-@pbStatus			Bit			= 1,
-@pvUser				Varchar(50) = '',
-@pvIP				Varchar(20) = ''
+@pvOptionCRUD			Varchar(1),
+@piIdAccount	    	Int = 0,
+@pvIdAccountType		Varchar(10) = '',
+@pvBusinessUnit			Varchar(15) = '',
+@pvObjectAccount		Varchar(15) = '',
+@pvSubsidiary       	Varchar(15) = '',
+@pvAccount_Name     	Varchar(50) = '',
+@pbStatus				Bit			= 1,
+@pvIdRole				Varchar(10) = '',
+@pbFreightWithholding 	Bit			= NULL,
+@pvUser					Varchar(50) = '',
+@pvIP					Varchar(20) = ''
 WITH ENCRYPTION
 AS
 
@@ -92,8 +96,10 @@ BEGIN TRY
 	BEGIN
 		SELECT
 		A.Id_Account, 
+		RAT.Id_Role,
 		A.Id_Account_Type,
 		Account_Type_Desc = T.Short_Desc,
+		T.Freight_Withholding,
 		A.Business_Unit,
 		A.Object_Account,
 		A.Subsidiary,
@@ -103,12 +109,22 @@ BEGIN TRY
 		A.Modify_Date,
 		A.Modify_IP
 		FROM Cat_Accounts A
+		
 		INNER JOIN Cat_Account_Types T ON
-		A.Id_Account_Type = T.Id_Account_Type		
+		A.Id_Account_Type = T.Id_Account_Type AND
+		T.[Status] = 1
+
+		
+		INNER JOIN Role_Account_Type RAT ON 
+		T.Id_Account_Type = RAT.Id_Account_Type AND
+		RAT.[Status] = 1
+
 		WHERE 
-		(@piIdAccount = '' OR A.Id_Account = @piIdAccount) AND
-		(@pvIdAccountType = '' OR A.Id_Account_Type = @pvIdAccountType)
-		ORDER BY  Id_Account_Type
+		(@piIdAccount 			= ''	OR A.Id_Account = @piIdAccount) AND
+		(@pvIdAccountType 		= ''	OR A.Id_Account_Type = @pvIdAccountType) AND 
+		(@pvIdRole 				= '' 	OR RAT.Id_Role = @pvIdRole) AND 
+		(@pbFreightWithholding	IS NULL OR T.Freight_Withholding = @pbFreightWithholding) 
+		ORDER BY  T.Id_Account_Type
 		
 	END
 

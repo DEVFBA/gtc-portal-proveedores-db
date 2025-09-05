@@ -22,36 +22,68 @@ Example:
 
         DECLARE  @udtInvoicesPools	    UDT_Invoices_Pools
 
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71905183-5c13-4fcb-8838-e25e80cd3472',175)
-        INSERT INTO @udtInvoicesPools VALUES ('COMENTS','71d1a517-9c6b-48b0-ad61-a2d7a7a5527f',176)
+        INSERT INTO @udtInvoicesPools VALUES ('COMMENTS','2e58a46a-88bd-4bce-aceb-5f8b727e7cd1',284)
+        INSERT INTO @udtInvoicesPools VALUES ('COMMENTS','15f95f6a-3451-4530-a3e1-8eb95381d180',285)
 		--SELECT * FROM @udtInvoicesPools
 
 
-        EXEC spInvoices_Pools_CRUD_Records	@pvOptionCRUD = 'C', 
-                                            @pudtInvoicesPools = @udtInvoicesPools,
-                                            @pvUser = 'AZEPEDA', 
-                                            @pvIP ='192.168.1.254'
+
+        EXEC spInvoices_Pools_CRUD_Records	@pvOptionCRUD 				= 'C', 
+                                            @pudtInvoicesPools 			= @udtInvoicesPools,
+                                            @piIdCompany				= 1,
+											@piIdVendor					= 1,
+											@fTotalInvoices				= 1000,
+											@fTotalAmount				= 2000,
+											@pvIdWorkflowType			= 'WF-POOL',
+											@piIdWorkflowStatus			= 100,
+											@piIdWorkflowStatusChange	= 100,
+											@pvGeneratedBy				= 'AZEPEDA',
+											@pvPath						= 'C:\',
+											@pvUser 					= 'AZEPEDA', 
+                                            @pvIP 						='192.168.1.254'
         
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R'  
 
-        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 6
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @piIdInvoicePool = 27
 
-        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U'
-        
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'R', @pvUUID = '518cee31-8e2c-4910-b2f5-996cdf9d29b2'
+
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvIdAgreementStatus = 
+        EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvDocumentId = 'Doc01'
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvAgreementId = 'Agreem01'
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'U', @piIdInvoicePool = 27, @pvNextSigner = 'Next01'
+
         EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'D'
+
+		EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD = 'G', @piIdInvoicePool = 21
 
         SELECT * FROM Invoices_Pools_Header
 		SELECT * FROM Invoices_Pools_Detail
-		SELECT * FROM workflow
+		SELECT * FROM workflow where Id_workflow in (497,498,502)
 
 
 */
 CREATE PROCEDURE [dbo].spInvoices_Pools_CRUD_Records
-@pvOptionCRUD			Varchar(1),
-@piIdInvoicePool        Numeric = 0,
-@pudtInvoicesPools	    UDT_Invoices_Pools Readonly,
-@pvUser					Varchar(50) = '',
-@pvIP				    Varchar(20) = ''
+@pvOptionCRUD				Varchar(1),
+@piIdInvoicePool        	Numeric = 0,
+@pudtInvoicesPools	    	UDT_Invoices_Pools Readonly,
+@piIdCompany				Int			= 0,
+@piIdVendor					Int			= -1,
+@fTotalInvoices				float		= 0,
+@fTotalAmount				float		= 0,		
+@pnIdWorkflow				Numeric		= 0,
+@pvIdWorkflowType			Varchar(10) = '',
+@piIdWorkflowStatus			Int			= 0, 
+@piIdWorkflowStatusChange	Int			= 0,
+@pvUUID						Varchar(50) = '',
+@pvIdAgreementStatus		varchar(10) = null,
+@pvDocumentId				varchar(500) = null,
+@pvAgreementId				varchar(500) = null,
+@pvNextSigner				varchar(50) = null,
+@pvGeneratedBy				varchar(60) = null,
+@pvPath						varchar(255) = null,
+@pvUser						Varchar(50) = '',
+@pvIP				    	Varchar(20) = ''
 WITH ENCRYPTION AS
 
 SET NOCOUNT ON
@@ -59,7 +91,10 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	--Work Variables
 	--------------------------------------------------------------------
-    DECLARE @iNumRegistros		Int			= (SELECT COUNT(*) FROM @pudtInvoicesPools)
+    DECLARE @iNumRegistros	Int			= (SELECT COUNT(*) FROM @pudtInvoicesPools)
+	DECLARE @TblResponse 	Table (Code smallint, Code_Classification Varchar(50), Code_Type Varchar(50), Code_Message_User Varchar(MAX) , Code_Successful Bit,  IdTransacLog Numeric , IdWorkflow Numeric) 
+	DECLARE @vComments 		Varchar(MAX) = (SELECT TOP 1 Comments FROM @pudtInvoicesPools )
+
 	--------------------------------------------------------------------
 	--Variables for log control
 	--------------------------------------------------------------------
@@ -68,29 +103,53 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Invoices_Pools - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @piIdInvoicePool = '" + ISNULL(CAST(@piIdInvoicePool AS VARCHAR),'NULL') + "', @pudtInvoicesPools = '" + ISNULL(CAST(@iNumRegistros AS VARCHAR),'NULL') + " rows affected', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spInvoices_Pools_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @piIdInvoicePool = '" + ISNULL(CAST(@piIdInvoicePool AS VARCHAR),'NULL') + "', @pudtInvoicesPools = '" + ISNULL(CAST(@iNumRegistros AS VARCHAR),'NULL') + " rows affected', @pvIdAgreementStatus = '" + ISNULL(@pvIdAgreementStatus,'NULL') + "', @pvDocumentId = '" + ISNULL(@pvDocumentId,'NULL') + "', @pvAgreementId = '" + ISNULL(@pvAgreementId,'NULL') + "', @pvNextSigner = '" + ISNULL(@pvNextSigner,'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	
     --------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'C'
 	BEGIN	
+
+			
             -----------------------		
 			--Insert Header
             -----------------------
 			INSERT INTO Invoices_Pools_Header (
-                Comments,
-                Modify_By,
-                Modify_Date,
-                Modify_IP)
+				Id_Company,
+				Id_Vendor,
+				Pool_Date,
+				Total_Invoices,
+				Total_Amount,
+				Comments,
+				Id_Agreement_Status,
+				Document_Id,
+				Agreement_Id,
+				Next_Signer,
+				Generated_By,
+				[Path],
+				Modify_By,
+				Modify_Date,
+				Modify_IP)
 
 			
-            SELECT DISTINCT 
-                Comments,
+            VALUES(
+				@piIdCompany,
+				@piIdVendor,
+				GETDATE(),
+				@fTotalInvoices,
+				@fTotalAmount,
+                @vComments,
+				@pvIdAgreementStatus,
+				@pvDocumentId,
+				@pvAgreementId,
+				@pvNextSigner,
+				@pvGeneratedBy,
+				@pvPath,
                 @pvUser,
                 GETDATE(),
-                @pvIP
-            FROM @pudtInvoicesPools
+                @pvIP)
+      
             
             --Obtine el Id_Invoice_Pool
             SET @piIdInvoicePool = @@IDENTITY
@@ -108,6 +167,19 @@ BEGIN TRY
                 UUID,
                 Id_Workflow
             FROM @pudtInvoicesPools   
+
+
+			-- INSERTA WF
+			INSERT INTO @TblResponse
+			EXEC spWorkflow_CRUD_Records 
+									@pvOptionCRUD 				= 'C', 
+									@pvIdWorkflowType 			= @pvIdWorkflowType, 
+									@piIdWorkflowStatus	 		= @piIdWorkflowStatus, 
+									@piIdWorkflowStatusChange 	= @piIdWorkflowStatusChange,
+									@pvRecordIdentifier 		= @piIdInvoicePool, 
+									@pvComments 				= @vComments,  
+									@pvUser 					= @pvUser, 
+									@pvIP 						= @pvIP
 	END
 
 	--------------------------------------------------------------------
@@ -115,16 +187,39 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'R'
 	BEGIN
-		SELECT  PH.Id_Invoice_Pool,
-                PH.Comments,
+		SELECT  --Headers
+				PH.Id_Invoice_Pool,
+				Header_Id_Company 		= PH.Id_Company,
+				Header_Company 			= CH.Name,
+				Header_Id_Vendor 		= PH.Id_Vendor,
+				Header_Vendor 			= VH.Name,
+				Header_Pool_Date 		= PH.Pool_Date,
+				Header_Total_Invoices 	= PH.Total_Invoices,
+				Header_Total_Amount 	= PH.Total_Amount,			
+                Header_Comments 		= PH.Comments,
+				Header_Id_Workflow 		= PH.Id_Workflow,
+				Header_Id_Workflow_Status_Change = WF.Id_Workflow_Status_Change,
+				Header_Workflow_Status_Change = WS.Short_Desc,
+				Header_PH_Generated_By = Generated_By,
+				Header_PH_Path = [Path],
+				PH.Id_Agreement_Status,
+				Agreement_Status_Desc = ASAS.Short_Desc,
+				PH.Document_Id,
+				PH.Agreement_Id,
+				PH.Next_Signer,
+				--Details
                 PD.UUID,
 				I.Id_Company,
 				Company = C.Name,
 				I.Id_Vendor,
 				Vendor = V.Name,
 				I.Serie,
-				I.Folio,				
-                PD.Id_Workflow,
+				I.Folio,
+				I.SubTotal,
+				I.Transferred_Taxes,
+				I.Withholded_Taxes,
+				I.Total,
+                PD.Id_Workflow,				
 				PH.Modify_By,
 				PH.Modify_Date,
 				PH.Modify_IP
@@ -142,11 +237,55 @@ BEGIN TRY
 		
 		INNER JOIN Cat_Vendors V ON
 		I.Id_Vendor = V.Id_Vendor AND
-		C.[Status] = 1
+		V.[Status] = 1
+
+		INNER JOIN Companies CH ON 
+		PH.Id_Company = CH.Id_Company AND
+		CH.[Status] = 1
+		
+		INNER JOIN Cat_Vendors VH ON
+		PH.Id_Vendor = VH.Id_Vendor AND
+		VH.[Status] = 1
+
+		INNER JOIN Workflow WF ON 
+		PH.Id_Workflow = WF.Id_Workflow
+
+		INNER JOIN Cat_Workflow_Status WS ON 
+		WF.Id_Workflow_Type = WS.Id_Workflow_Type AND 
+		WF.Id_Workflow_Status_Change = WS.Id_Workflow_Status
+		
+		LEFT OUTER JOIN Cat_Adobe_Sign_Agreement_Status  ASAS ON 
+		PH.Id_Agreement_Status = ASAS.Id_Agreement_Status
 
 		WHERE 
-		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) 
+		(@piIdInvoicePool	= 0	 OR PH.Id_Invoice_Pool = @piIdInvoicePool) AND
+		(@pvUUID = '' OR PD.UUID = @pvUUID) AND		
+		(@pvIdAgreementStatus	IS NULL  OR PH.Id_Agreement_Status = @pvIdAgreementStatus ) AND 
+		(@pvDocumentId	IS NULL  OR PH.Document_Id = @pvDocumentId ) AND 
+		(@pvAgreementId	IS NULL  OR PH.Agreement_Id = @pvAgreementId ) AND 
+		(@pvNextSigner	IS NULL  OR PH.Next_Signer = @pvNextSigner ) 
+
 		ORDER BY  PH.Id_Invoice_Pool, PD.UUID	
+	END
+
+	--------------------------------------------------------------------
+	--Reads Records
+	--------------------------------------------------------------------
+	IF @pvOptionCRUD = 'G'
+	BEGIN
+	SET LANGUAGE Spanish
+		SELECT 	[Month] 			= MONTH(I.Invoice_Date),
+				[MonthName] 		= DATENAME(MONTH,I.Invoice_Date),
+				SubTotal 			= SUM(SubTotal),
+				Transferred_Taxes 	= SUM(Transferred_Taxes),
+				Withholded_Taxes 	= SUM(Withholded_Taxes),
+				Total				= SUM(Total)
+		FROM Invoices_Pools_Detail PD
+		INNER JOIN Invoices I ON
+		PD.UUID = I.UUID
+		WHERE Id_Invoice_Pool = @piIdInvoicePool
+		GROUP BY MONTH(I.Invoice_Date), DATENAME(MONTH,I.Invoice_Date)
+		ORDER BY MONTH(I.Invoice_Date)
 	END
 
 	--------------------------------------------------------------------
@@ -154,7 +293,26 @@ BEGIN TRY
 	--------------------------------------------------------------------
 	IF @pvOptionCRUD = 'U'
 	BEGIN
-	   SET @iCode	= dbo.fnGetCodes('Invalid Option')	
+		IF @pvIdAgreementStatus IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Id_Agreement_Status = @pvIdAgreementStatus
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
+		IF @pvDocumentId IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Document_Id = @pvDocumentId
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
+		IF @pvAgreementId IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Agreement_Id = @pvAgreementId
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+		
+		IF @pvNextSigner IS NOT NULL 
+			UPDATE Invoices_Pools_Header
+			SET  Next_Signer = @pvNextSigner
+			WHERE Id_Invoice_Pool = @piIdInvoicePool
+
 	END
 
 	--------------------------------------------------------------------
@@ -185,7 +343,7 @@ BEGIN TRY
 	
 	SET NOCOUNT OFF
 	
-	IF @pvOptionCRUD <> 'R'
+	IF @pvOptionCRUD NOT IN('R','G')
 	SELECT Code, Code_Classification, Code_Type , Code_Message_User, Code_Successful,  IdTransacLog = @nIdTransacLog, Id_Invoice_Pool = @piIdInvoicePool FROM vwSecurityCodes WHERE Code = @iCode
 
 END TRY

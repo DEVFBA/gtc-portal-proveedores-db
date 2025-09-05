@@ -22,12 +22,14 @@ Example:
 			spSecurity_Users_CRUD_Records	@pvOptionCRUD			= 'C',											
 											@pvIdUser				= 'alejandro.zepeda@gmail.com' , 
 											@pvIdRole				= 'ADMIN', 
+											@pvIdDepartment			= '001',
 											@piIdVendor				= 2,
 											@pvPassword				= '6c690c09caf5abbab6178e980881cbf5568481e48cd344e4b726c34c6e81be57', 
 											@pvName					= 'Alejandro Zepeda', 
 											@pbTempPassword			= 0, 
 											@pvFinalEffectiveDate	= NULL, 
 											@pvProfilePicPath       = 'C:\Imagen.jpg',
+											@pvEmail				= 'correo@example.com',
 											@pbStatus				= 1, 
 											@pvUser					= 'ALZEPEDA', 
 											@pvIP					='192.168.1.254'
@@ -45,13 +47,15 @@ Example:
 
 			spSecurity_Users_CRUD_Records	@pvOptionCRUD			= 'U',	
 											@pvIdUser				= 'alejandro.zepeda@gmail.com' , 
-											@pvIdRole				= 'ADMIN', 
+											@pvIdRole				= 'ADMIN',
+											@pvIdDepartment			= '001',
 											@piIdVendor				= 2,
 											@pvPassword				= '', 
 											@pvName					= 'Alejandro Zepeda', 
 											@pvFinalEffectiveDate	= '', 
 											@pbTempPassword			= 0, 
 											@pvProfilePicPath       = 'C:\Imagen.jpg',
+											@pvEmail				= 'correo@example.com',
 											@pbStatus				= 1, 
 											@pvUser					= 'ALZEPEDA', 
 											@pvIP					='192.168.1.254'
@@ -64,12 +68,14 @@ CREATE PROCEDURE [dbo].spSecurity_Users_CRUD_Records
 @pvOptionCRUD			Varchar(5),
 @pvIdUser				Varchar(60)	= '',
 @pvIdRole				Varchar(10)	= '', 
+@pvIdDepartment	    	Varchar	(10)='',
 @piIdVendor				Int			= -1,
 @pvPassword				Varchar(255)= '',
 @pvName					Varchar(255)= '',
 @pbTempPassword			Bit			= 0,	
 @pvFinalEffectiveDate	Varchar(8)	= NULL,
 @pvProfilePicPath		Varchar(255)= '',
+@pvEmail				Varchar(255)= NULL,
 @pbStatus				Bit			= 1,
 @pvUser					Varchar(50)	= '',
 @pvIP					Varchar(20)	= ''
@@ -89,7 +95,7 @@ BEGIN TRY
 	DECLARE @vDescription		Varchar(255)	= 'Security_Access - ' + @vDescOperationCRUD 
 	DECLARE @iCode				Int				= dbo.fnGetCodes(@pvOptionCRUD)	
 	DECLARE @vExceptionMessage	Varchar(MAX)	= ''
-	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
+	DECLARE @vExecCommand		Varchar(Max)	= "EXEC spSecurity_Users_CRUD_Records @pvOptionCRUD =  '" + ISNULL(@pvOptionCRUD,'NULL') + "', @pvIdUser = '" + ISNULL(@pvIdUser,'NULL') + "', @pvIdRole = '" + ISNULL(@pvIdRole,'NULL') + "', @pvIdDepartment = '" + ISNULL(CAST(@pvIdDepartment AS VARCHAR),'NULL') + "', @piIdVendor = '" + ISNULL(CAST(@piIdVendor AS VARCHAR),'NULL') + "', @pvPassword = '" + ISNULL(@pvPassword,'NULL') + "', @pvName = '" + ISNULL(@pvName,'NULL') + "', @pbTempPassword = '" + ISNULL(CAST(@pbTempPassword AS VARCHAR),'NULL') + "', @pvFinalEffectiveDate = '" + ISNULL(@pvFinalEffectiveDate,'NULL') + "', @pvProfilePicPath = '" + ISNULL(@pvProfilePicPath,'NULL') + "',  @pvEmail = '" + ISNULL(@pvEmail,'NULL') + "', @pbStatus = '" + ISNULL(CAST(@pbStatus AS VARCHAR),'NULL') + "', @pvUser = '" + ISNULL(@pvUser,'NULL') + "', @pvIP = '" + ISNULL(@pvIP,'NULL') + "'"
 	--------------------------------------------------------------------
 	--Create Records
 	--------------------------------------------------------------------
@@ -100,19 +106,21 @@ BEGIN TRY
 		BEGIN
 			SET @iCode	= dbo.fnGetCodes('Duplicate Record')		
 		END
-		ELSE -- Don´t Exists
+		ELSE -- Don't Exists
 		BEGIN
 			IF @pvFinalEffectiveDate = '' SET @pvFinalEffectiveDate = NULL
 
 			INSERT INTO Security_Users (
 				[User],
 				Id_Role,
+				Id_Department,
 				Id_Vendor,
 				[Password],
 				[Name],
 				Temporal_Password,
 				Final_Effective_Date,
 				Profile_Pic_Path,
+				Email,
 				[Status],
 				Modify_By,
 				Modify_Date,
@@ -120,12 +128,14 @@ BEGIN TRY
 			VALUES (
 				@pvIdUser,
 				@pvIdRole,
+				@pvIdDepartment,
 				@piIdVendor,
 				@pvPassword,
 				@pvName,
 				@pbTempPassword,
 				@pvFinalEffectiveDate,
 				@pvProfilePicPath,
+				@pvEmail,
 				@pbStatus,				
 				@pvUser,
 				GETDATE(),
@@ -143,6 +153,8 @@ BEGIN TRY
 		U.[User],
 		U.Id_Role,
 		Role_Desc = R.Short_Desc,
+		U.Id_Department, 
+		Department_Desc = D.Short_Desc, 
 		U.Id_Vendor,
 		Vendor = V.[Name],
 		U.[Password],
@@ -150,6 +162,7 @@ BEGIN TRY
 		Temporal_Password,
 		Final_Effective_Date,
 		Profile_Pic_Path,
+		U.Email,
 		U.[Status],
 		U.Modify_Date,
 		U.Modify_By,
@@ -162,11 +175,15 @@ BEGIN TRY
 		INNER JOIN Cat_Vendors V ON 
 		U.Id_Vendor = V.Id_Vendor
 
+		LEFT OUTER JOIN Cat_Departments D ON
+		U.Id_Department = D.Id_Department
+
 		WHERE 
 		
 		(@pvIdRole		= ''	OR U.Id_Role = @pvIdRole) AND 
 		(@pvIdUser		= ''	OR U.[User] = @pvIdUser) AND
-		(@piIdVendor	= -1	OR V.Id_Vendor = @piIdVendor) 
+		(@piIdVendor	= -1	OR U.Id_Vendor = @piIdVendor) AND
+		(@pvIdDepartment	= ''	OR U.Id_Department = @pvIdDepartment)  
 		  
 		
 		ORDER BY [User]
@@ -203,11 +220,13 @@ BEGIN TRY
 		UPDATE Security_Users 
 		SET 
 			Id_Role				= @pvIdRole,
+			Id_Department		= @pvIdDepartment,
 			[Password]			= (CASE WHEN @pvPassword = '' THEN [Password] ELSE @pvPassword END) ,
 			[Name]				= @pvName,
 			Temporal_Password	= @pbTempPassword,
 			Final_Effective_Date= (CASE WHEN @pvFinalEffectiveDate = '' THEN Final_Effective_Date ELSE @pvFinalEffectiveDate END),
 			Profile_Pic_Path	= (CASE WHEN @pvProfilePicPath = '' THEN Profile_Pic_Path ELSE @pvProfilePicPath END),
+			Email				= (CASE WHEN @pvEmail IS NULL THEN Email ELSE @pvEmail END),
 			[Status]			= @pbStatus,
 			Modify_Date			= GETDATE(),
 			Modify_By			= @pvUser,

@@ -32,7 +32,7 @@ BEGIN
 	DECLARE @iCode Int
 	DECLARE @iBDClassification SMALLINT = 1
 
-	IF @pvOperation IN ('C','R','U','D','L','W')
+	IF @pvOperation IN ('C','R','U','D','L','W','G')
 	BEGIN
 		SET @iCode = CASE @pvOperation
 						WHEN 'Success' THEN 1100
@@ -42,6 +42,7 @@ BEGIN
 						WHEN 'D' THEN 1104
 						WHEN 'L' THEN 1105
 						WHEN 'W' THEN 1106
+						WHEN 'G' THEN 1102
 					 END
 	END
 	ELSE
